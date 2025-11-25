@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { CLUB_MEMBERS } from '../constants';
+import React, { useState, useEffect } from 'react';
+import { CLUB_MEMBERS } from '../constants'; // Keep as fallback/initial state if needed
+import { Member } from '../types';
 import MemberCard from './MemberCard';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const containerVariants = {
@@ -29,11 +30,32 @@ const itemVariants = {
 
 const Directory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const filteredMembers = CLUB_MEMBERS.filter(member => 
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const response = await fetch('/api/get-members');
+        if (!response.ok) throw new Error('Failed to fetch');
+        const data = await response.json();
+        setMembers(data);
+      } catch (err) {
+        console.error("Using fallback data due to:", err);
+        setMembers(CLUB_MEMBERS); // Fallback to local data
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMembers();
+  }, []);
+
+  const filteredMembers = members.filter(member => 
     member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.profession.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.businessHelp.toLowerCase().includes(searchTerm.toLowerCase())
+    (member.businessHelp && member.businessHelp.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -71,7 +93,11 @@ const Directory: React.FC = () => {
           </motion.div>
         </div>
 
-        {filteredMembers.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin h-10 w-10 text-blue-600" />
+          </div>
+        ) : filteredMembers.length > 0 ? (
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             variants={containerVariants}
