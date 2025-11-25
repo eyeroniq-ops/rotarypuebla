@@ -1,0 +1,28 @@
+import React from 'react';
+import Background from './components/Background';
+import Navbar from './components/Navbar';
+import Hero from './components/Hero';
+import About from './components/About';
+import Events from './components/Events';
+import Directory from './components/Directory';
+import Gallery from './components/Gallery';
+import Footer from './components/Footer';
+
+function App() {
+  return (
+    <main className="selection:bg-yellow-400 selection:text-black">
+      <Background />
+      <Navbar />
+      <div className="flex flex-col gap-0">
+        <Hero />
+        <About />
+        <Events />
+        <Directory />
+        <Gallery />
+      </div>
+      <Footer />
+    </main>
+  );
+}
+
+export default App;
