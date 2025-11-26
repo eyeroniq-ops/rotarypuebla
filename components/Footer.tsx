@@ -1,7 +1,11 @@
 import React from 'react';
-import { Facebook, Twitter, Instagram, Mail, MapPin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Mail, MapPin, Lock } from 'lucide-react';
 
-const Footer: React.FC = () => {
+interface FooterProps {
+  onAdminClick?: () => void;
+}
+
+const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
   return (
     <footer className="relative bg-slate-900 pt-20 pb-10 border-t border-white/5">
       <div className="container mx-auto px-6">
@@ -49,10 +53,13 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="border-t border-white/5 pt-8 text-center">
-          <p className="text-slate-500 text-xs">
+        <div className="border-t border-white/5 pt-8 flex justify-between items-center text-slate-500 text-xs">
+          <p>
             © {new Date().getFullYear()} Club Rotario Puebla Vivo. Todos los derechos reservados.
           </p>
+          <button onClick={onAdminClick} className="opacity-20 hover:opacity-100 transition-opacity">
+            <Lock size={14} />
+          </button>
         </div>
       </div>
     </footer>

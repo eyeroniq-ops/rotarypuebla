@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { UPCOMING_EVENTS } from '../constants';
 import { Event } from '../types';
 import { MapPin, Clock, ArrowRight, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -14,7 +14,7 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 50 },
   show: { 
     opacity: 1, 
@@ -91,7 +91,8 @@ const Events: React.FC = () => {
                 key={event.id}
                 variants={itemVariants}
                 whileHover={{ y: -8 }}
-                className="glass-panel rounded-3xl overflow-hidden transition-all duration-300 flex flex-col group h-full hover:shadow-xl"
+                className="glass-panel rounded-3xl overflow-hidden transition-shadow duration-300 flex flex-col group h-full hover:shadow-xl transform-gpu"
+                style={{ backfaceVisibility: 'hidden' }}
               >
                 <div className="relative h-56 overflow-hidden">
                   <img 

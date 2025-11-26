@@ -25,14 +25,6 @@
         -webkit-backdrop-filter: blur(24px) saturate(160%);
         border: 1px solid rgba(255, 255, 255, 0.6);
         box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
-        
-        /* CRITICAL: Hardware acceleration hacks to prevent flickering during animation */
-        transform: translate3d(0, 0, 0);
-        -webkit-transform: translate3d(0, 0, 0);
-        will-change: transform, opacity;
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-        perspective: 1000px;
       }
       .glass-panel:hover {
         background: rgba(255, 255, 255, 0.85);

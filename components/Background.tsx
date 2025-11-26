@@ -18,7 +18,6 @@ const Background: React.FC = () => {
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        style={{ willChange: 'transform' }}
       />
 
       {/* 2. Cyan/Teal - Bottom Left - Vibrant */}
@@ -35,7 +34,6 @@ const Background: React.FC = () => {
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        style={{ willChange: 'transform' }}
       />
 
       {/* 3. Violet/Purple - Middle/Left - Contrast */}
@@ -52,7 +50,6 @@ const Background: React.FC = () => {
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        style={{ willChange: 'opacity, transform' }}
       />
       
       {/* 4. Indigo - Bottom Right - Depth */}
@@ -68,7 +65,6 @@ const Background: React.FC = () => {
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        style={{ willChange: 'transform' }}
       />
 
       {/* 5. Subtle Gold Hint - Top Left - Warmth/Contrast */}
@@ -84,7 +80,6 @@ const Background: React.FC = () => {
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        style={{ willChange: 'opacity, transform' }}
       />
 
       {/* Noise Texture */}

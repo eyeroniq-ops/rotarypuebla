@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Background from './components/Background';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -7,8 +7,11 @@ import Events from './components/Events';
 import Directory from './components/Directory';
 import Gallery from './components/Gallery';
 import Footer from './components/Footer';
+import AdminDashboard from './components/AdminDashboard';
 
 function App() {
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+
   return (
     <main className="selection:bg-yellow-400 selection:text-black">
       <Background />
@@ -20,7 +23,11 @@ function App() {
         <Directory />
         <Gallery />
       </div>
-      <Footer />
+      <Footer onAdminClick={() => setIsAdminOpen(true)} />
+      
+      {isAdminOpen && (
+        <AdminDashboard onClose={() => setIsAdminOpen(false)} />
+      )}
     </main>
   );
 }

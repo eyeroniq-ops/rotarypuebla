@@ -14,9 +14,8 @@ const MemberCard: React.FC<MemberCardProps> = ({ member }) => {
     <motion.div 
       whileHover={{ y: -8 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      // Force hardware acceleration to fix flickering
-      style={{ transform: "translate3d(0,0,0)", backfaceVisibility: "hidden" }} 
-      className="glass-panel rounded-3xl overflow-hidden flex flex-col h-full duration-300 transition-colors group"
+      className="glass-panel rounded-3xl overflow-hidden flex flex-col h-full duration-300 transition-colors group transform-gpu"
+      style={{ backfaceVisibility: 'hidden' }}
     >
       {/* Header Image & Basic Info */}
       <div className="relative h-32 bg-gradient-to-r from-blue-600 to-sky-500">
@@ -25,7 +24,7 @@ const MemberCard: React.FC<MemberCardProps> = ({ member }) => {
            <img 
             src={member.imageUrl} 
             alt={member.name} 
-            className="w-24 h-24 rounded-full border-[4px] border-white object-cover shadow-lg"
+            className="w-24 h-24 rounded-full border-[4px] border-white object-cover shadow-lg bg-white"
            />
         </div>
         <div className="absolute top-4 right-4 bg-white/30 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 text-white shadow-sm border border-white/40">
