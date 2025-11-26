@@ -13,9 +13,14 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
           
           {/* Brand */}
           <div>
-            <h3 className="text-2xl font-bold text-white mb-4">
-              Club Rotario <span className="text-yellow-500">Puebla Vivo</span>
-            </h3>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-white rounded-full p-1 shadow-md">
+                <img src="rtr.png" alt="Rotary Logo" className="w-8 h-8 object-contain" />
+              </div>
+              <h3 className="text-2xl font-bold text-white">
+                Club Rotario <span className="text-yellow-500">Puebla Vivo</span>
+              </h3>
+            </div>
             <p className="text-slate-400 text-sm leading-relaxed">
               Juntos, vemos un mundo donde las personas se unen y toman acción para crear un cambio duradero en nosotros mismos, en nuestras comunidades y en el mundo entero.
             </p>

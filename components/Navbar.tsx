@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Globe } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Navbar: React.FC = () => {
@@ -36,9 +36,11 @@ const Navbar: React.FC = () => {
           
           {/* Logo Area */}
           <div className="flex items-center space-x-3">
-             <div className="bg-white/80 p-1.5 rounded-full shadow-sm">
-                <Globe className="w-6 h-6 text-blue-700 animate-pulse-slow" />
-             </div>
+             <img 
+               src="rtr.png" 
+               alt="Rotary International" 
+               className="w-10 h-10 md:w-12 md:h-12 object-contain drop-shadow-sm"
+             />
              <div className="flex flex-col leading-none">
                <span className="text-lg font-bold tracking-wider text-slate-800">ROTARY</span>
                <span className="text-[10px] text-yellow-500 font-extrabold tracking-[0.2em] uppercase">Puebla Vivo</span>
