@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Globe } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,58 +23,84 @@ const Navbar: React.FC = () => {
   ];
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'py-2' : 'py-4'}`}>
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className={`glass-panel rounded-2xl px-6 py-3 flex justify-between items-center transition-all duration-300 ${scrolled ? 'shadow-md bg-white/80' : ''}`}>
+    <nav className="fixed w-full z-50 py-4 flex justify-center">
+      <motion.div 
+        className={`w-[95%] md:w-[85%] max-w-6xl transition-all duration-500 ease-in-out ${
+          scrolled ? 'glass-liquid rounded-full px-6 py-2 shadow-lg' : 'glass-liquid rounded-2xl px-8 py-4 bg-white/40 border-transparent shadow-none'
+        }`}
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.8, type: "spring" }}
+      >
+        <div className="flex justify-between items-center">
           
           {/* Logo Area */}
-          <div className="flex items-center space-x-2">
-             <Globe className="w-8 h-8 text-blue-700 animate-pulse-slow" />
-             <div className="flex flex-col">
+          <div className="flex items-center space-x-3">
+             <div className="bg-white/80 p-1.5 rounded-full shadow-sm">
+                <Globe className="w-6 h-6 text-blue-700 animate-pulse-slow" />
+             </div>
+             <div className="flex flex-col leading-none">
                <span className="text-lg font-bold tracking-wider text-slate-800">ROTARY</span>
-               <span className="text-xs text-yellow-500 font-bold tracking-widest">PUEBLA VIVO</span>
+               <span className="text-[10px] text-yellow-500 font-extrabold tracking-[0.2em] uppercase">Puebla Vivo</span>
              </div>
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex space-x-8">
+          <div className="hidden md:flex space-x-1">
             {navLinks.map((link) => (
               <a 
                 key={link.name} 
                 href={link.href} 
-                className="text-sm font-semibold text-slate-600 hover:text-blue-700 transition-colors uppercase tracking-wide relative group"
+                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-blue-700 transition-all rounded-full hover:bg-white/50"
               >
                 {link.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 transition-all group-hover:w-full"></span>
               </a>
             ))}
+            <a 
+              href="#join"
+              className="ml-4 px-5 py-2 text-sm font-bold bg-blue-600 text-white rounded-full shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all hover:scale-105"
+            >
+              Unirse
+            </a>
           </div>
 
           {/* Mobile Button */}
           <div className="md:hidden">
-            <button onClick={() => setIsOpen(!isOpen)} className="text-slate-800 focus:outline-none">
-              {isOpen ? <X /> : <Menu />}
+            <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-full hover:bg-white/50 text-slate-800 transition-colors">
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full px-4 mt-2">
-          <div className="glass-panel rounded-2xl p-4 flex flex-col space-y-4 bg-white/95">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="md:hidden absolute top-24 left-4 right-4 z-40"
+        >
+          <div className="glass-liquid rounded-2xl p-4 flex flex-col space-y-2">
             {navLinks.map((link) => (
               <a 
                 key={link.name} 
                 href={link.href} 
-                className="text-slate-700 hover:text-blue-600 font-bold py-2 border-b border-slate-200 last:border-0"
+                className="text-slate-700 hover:text-blue-600 font-bold px-4 py-3 rounded-xl hover:bg-white/50 transition-colors"
                 onClick={() => setIsOpen(false)}
               >
                 {link.name}
               </a>
             ))}
+             <a 
+                href="#join"
+                className="text-center font-bold px-4 py-3 rounded-xl bg-blue-600 text-white shadow-md"
+                onClick={() => setIsOpen(false)}
+              >
+                Unirse al Club
+              </a>
           </div>
-        </div>
+        </motion.div>
       )}
     </nav>
   );

@@ -7,6 +7,7 @@ import Events from './components/Events';
 import Directory from './components/Directory';
 import Gallery from './components/Gallery';
 import Footer from './components/Footer';
+import JoinUs from './components/JoinUs';
 import AdminDashboard from './components/AdminDashboard';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
       <div className="flex flex-col gap-0">
         <Hero />
         <About />
+        <JoinUs />
         <Events />
         <Directory />
         <Gallery />
