@@ -57,7 +57,7 @@ const Gallery: React.FC = () => {
     }
   };
 
-  // 3D Carousel Logic
+  // Carousel Logic
   const getCardStyle = (index: number) => {
     const total = items.length;
     if (total === 0) return {};
@@ -102,7 +102,7 @@ const Gallery: React.FC = () => {
              whileInView={{ opacity: 1, y: 0 }}
              viewport={{ once: true }}
            >
-             Galería <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-400">3D</span>
+             Galería <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-400">Interactiva</span>
            </motion.h2>
            <motion.p 
              className="text-slate-600 text-lg max-w-2xl mx-auto"
@@ -206,7 +206,7 @@ const Gallery: React.FC = () => {
             </AnimatePresence>
             
             {/* Controls */}
-            <div className="absolute bottom-4 md:bottom-10 flex items-center gap-6 z-50">
+            <div className="absolute bottom-4 md:bottom-10 flex items-center gap-6 z-[200]">
                <button 
                  onClick={(e) => { e.stopPropagation(); handlePrev(); }}
                  className="p-4 rounded-full bg-white/80 backdrop-blur-md shadow-lg text-slate-800 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110"
