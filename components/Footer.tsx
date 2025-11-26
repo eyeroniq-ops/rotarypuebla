@@ -6,6 +6,9 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
+  // Robustly resolve the image URL using Vite's asset handling
+  const rotaryLogo = new URL('../rtr.png', import.meta.url).href;
+
   return (
     <footer className="relative bg-slate-900 pt-20 pb-10 border-t border-white/5">
       <div className="container mx-auto px-6">
@@ -15,7 +18,7 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-white rounded-full p-1 shadow-md">
-                <img src="rtr.png" alt="Rotary Logo" className="w-8 h-8 object-contain" />
+                <img src={rotaryLogo} alt="Rotary Logo" className="w-8 h-8 object-contain" />
               </div>
               <h3 className="text-2xl font-bold text-white">
                 Club Rotario <span className="text-yellow-500">Puebla Vivo</span>

@@ -5,6 +5,9 @@ import { motion } from 'framer-motion';
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  
+  // Robustly resolve the image URL using Vite's asset handling
+  const rotaryLogo = new URL('../rtr.png', import.meta.url).href;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,7 +40,7 @@ const Navbar: React.FC = () => {
           {/* Logo Area */}
           <div className="flex items-center space-x-3">
              <img 
-               src="rtr.png" 
+               src={rotaryLogo} 
                alt="Rotary International" 
                className="w-10 h-10 md:w-12 md:h-12 object-contain drop-shadow-sm"
              />
