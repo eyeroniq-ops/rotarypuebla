@@ -156,8 +156,8 @@ const SuperBowlPoll: React.FC = () => {
                         <div key={option}>
                             <label
                                 className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedOption === option
-                                        ? 'border-blue-600 bg-blue-50'
-                                        : 'border-slate-200 hover:border-blue-300'
+                                    ? 'border-blue-600 bg-blue-50'
+                                    : 'border-slate-200 hover:border-blue-300'
                                     }`}
                             >
                                 <input
@@ -237,7 +237,7 @@ const SuperBowlPoll: React.FC = () => {
                                         animate={{ width: `${getPercentage(count)}%` }}
                                         transition={{ duration: 1, ease: "easeOut" }}
                                         className={`h-full rounded-full ${option === 'Casa de Jorge' ? 'bg-blue-500' :
-                                                option === 'Solesta' ? 'bg-green-500' : 'bg-purple-500'
+                                            option === 'Solesta' ? 'bg-green-500' : 'bg-purple-500'
                                             }`}
                                     />
                                 </div>
@@ -245,8 +245,17 @@ const SuperBowlPoll: React.FC = () => {
                         ))}
                     </div>
 
-                    <div className="pt-4 text-center">
+                    <div className="pt-4 text-center space-y-4">
                         <p className="text-slate-500 text-sm">Total de votos: {totalVotes}</p>
+
+                        {!hasVoted && (
+                            <button
+                                onClick={() => setShowResults(false)}
+                                className="text-blue-600 font-bold hover:text-blue-700 hover:underline transition-all text-sm"
+                            >
+                                ← Volver a la votación
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
