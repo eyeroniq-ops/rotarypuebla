@@ -3,6 +3,7 @@ import { UPCOMING_EVENTS } from '../constants';
 import { Event } from '../types';
 import { MapPin, Clock, ArrowRight, Loader2 } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
+import SuperBowlPoll from './SuperBowlPoll';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -16,8 +17,8 @@ const containerVariants: Variants = {
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 50 },
-  show: { 
-    opacity: 1, 
+  show: {
+    opacity: 1,
     y: 0,
     transition: {
       type: "spring",
@@ -53,17 +54,17 @@ const Events: React.FC = () => {
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12">
           <motion.div
-             initial={{ opacity: 0, y: 20 }}
-             whileInView={{ opacity: 1, y: 0 }}
-             viewport={{ once: true }}
-             transition={{ duration: 0.6 }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-800">Próximos Eventos</h2>
             <p className="text-slate-600 max-w-xl text-lg">
               Participa en nuestras actividades y ayúdanos a recaudar fondos para nuestras causas.
             </p>
           </motion.div>
-          <motion.div 
+          <motion.div
             className="hidden md:flex items-center gap-2 text-blue-600 font-semibold mt-4 md:mt-0"
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -74,12 +75,16 @@ const Events: React.FC = () => {
           </motion.div>
         </div>
 
+        <div className="mb-16">
+          <SuperBowlPoll />
+        </div>
+
         {loading ? (
-           <div className="flex justify-center py-10">
+          <div className="flex justify-center py-10">
             <Loader2 className="animate-spin h-10 w-10 text-blue-600" />
-           </div>
+          </div>
         ) : (
-          <motion.div 
+          <motion.div
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
             variants={containerVariants}
             initial="hidden"
@@ -87,7 +92,7 @@ const Events: React.FC = () => {
             viewport={{ once: true, margin: "-50px" }}
           >
             {events.map((event) => (
-              <motion.div 
+              <motion.div
                 key={event.id}
                 variants={itemVariants}
                 whileHover={{ y: -8 }}
@@ -95,14 +100,14 @@ const Events: React.FC = () => {
                 style={{ backfaceVisibility: 'hidden' }}
               >
                 <div className="relative h-56 overflow-hidden">
-                  <img 
-                    src={event.imageUrl} 
-                    alt={event.title} 
+                  <img
+                    src={event.imageUrl}
+                    alt={event.title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute top-4 left-4 bg-white/80 backdrop-blur-md rounded-xl px-4 py-2 shadow-sm text-center min-w-[70px] border border-white/50">
-                     <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">{event.date.split(' ')[1]}</span>
-                     <span className="block text-2xl font-bold text-blue-600 leading-none">{event.date.split(' ')[0]}</span>
+                    <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">{event.date.split(' ')[1]}</span>
+                    <span className="block text-2xl font-bold text-blue-600 leading-none">{event.date.split(' ')[0]}</span>
                   </div>
                 </div>
 
@@ -110,7 +115,7 @@ const Events: React.FC = () => {
                   <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">
                     {event.title}
                   </h3>
-                  
+
                   <div className="space-y-3 mb-5 text-sm font-medium text-slate-600">
                     <div className="flex items-center gap-3">
                       <div className="p-1.5 rounded-full bg-blue-50 text-blue-500">
@@ -134,10 +139,10 @@ const Events: React.FC = () => {
             ))}
           </motion.div>
         )}
-        
+
         <div className="mt-8 text-center md:hidden">
-           <div className="inline-flex items-center gap-2 text-blue-600 font-semibold">
-             <span>Calendario Oficial</span> <ArrowRight size={18} />
+          <div className="inline-flex items-center gap-2 text-blue-600 font-semibold">
+            <span>Calendario Oficial</span> <ArrowRight size={18} />
           </div>
         </div>
       </div>
