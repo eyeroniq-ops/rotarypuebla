@@ -16,6 +16,7 @@ const SuperBowlPoll: React.FC = () => {
     const [hasVoted, setHasVoted] = useState(false);
     const [votes, setVotes] = useState<VoteCounts>({ 'Casa de Jorge': 0, 'Solesta': 0, 'Otro': 0 });
     const [totalVotes, setTotalVotes] = useState(0);
+    const [customOptions, setCustomOptions] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showResults, setShowResults] = useState(false);
@@ -62,12 +63,16 @@ const SuperBowlPoll: React.FC = () => {
         }
 
         const counts: VoteCounts = { 'Casa de Jorge': 0, 'Solesta': 0, 'Otro': 0 };
+        const customs: string[] = [];
         let total = 0;
 
         data.forEach((vote: any) => {
             total++;
             if (vote.option === 'Otro') {
                 counts['Otro'] = (counts['Otro'] || 0) + 1;
+                if (vote.custom_option && vote.custom_option.trim() !== '') {
+                    customs.push(vote.custom_option);
+                }
             } else if (counts[vote.option] !== undefined) {
                 counts[vote.option]++;
             } else {
@@ -77,6 +82,7 @@ const SuperBowlPoll: React.FC = () => {
         });
 
         setVotes(counts);
+        setCustomOptions(customs);
         setTotalVotes(total);
     };
 
@@ -241,6 +247,17 @@ const SuperBowlPoll: React.FC = () => {
                                             }`}
                                     />
                                 </div>
+
+                                {option === 'Otro' && customOptions.length > 0 && (
+                                    <div className="mt-2 ml-2 pl-3 border-l-2 border-purple-200">
+                                        <p className="text-xs font-semibold text-slate-500 mb-1">Opciones propuestas:</p>
+                                        <ul className="text-xs text-slate-600 space-y-1">
+                                            {customOptions.map((opt, idx) => (
+                                                <li key={idx}>• {opt}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
