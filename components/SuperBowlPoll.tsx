@@ -81,26 +81,32 @@ const SuperBowlPoll: React.FC = () => {
         // This allows us to satisfy the column requirement without blocking shared IPs
         const clientId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-        const { error: insertError } = await supabase
-            .from('votes')
-            .insert([
-                {
-                    option: selectedOption,
-                    custom_option: selectedOption === 'Otro' ? customOption : null,
-                    ip_address: `browser-${clientId}` // Prefix to identify these as non-IPs
-                }
-            ]);
+        try {
+            const { error: insertError } = await supabase
+                .from('votes')
+                .insert([
+                    {
+                        option: selectedOption,
+                        custom_option: selectedOption === 'Otro' ? customOption : null,
+                        ip_address: `browser-${clientId}`
+                    }
+                ]);
 
-        if (insertError) {
-            setError('Hubo un error al registrar tu voto. Intenta más tarde.');
-            console.error(insertError);
-        } else {
-            localStorage.setItem('hasVotedSuperBowl', 'true');
-            setHasVoted(true);
-            setShowResults(true);
-            fetchResults();
+            if (insertError) {
+                console.error('Supabase Error:', insertError);
+                setError(`Error al guardar: ${insertError.message || JSON.stringify(insertError)}`);
+            } else {
+                localStorage.setItem('hasVotedSuperBowl', 'true');
+                setHasVoted(true);
+                setShowResults(true);
+                fetchResults();
+            }
+        } catch (err: any) {
+            console.error('Unexpected Error:', err);
+            setError(`Error inesperado: ${err.message || 'Error desconocido'}`);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const getPercentage = (count: number) => {
