@@ -22,35 +22,13 @@ const SuperBowlPoll: React.FC = () => {
     const [showResults, setShowResults] = useState(false);
 
     useEffect(() => {
-        checkIfVoted();
-    }, []);
-
-    const getIp = async () => {
-        try {
-            const response = await fetch('https://api.ipify.org?format=json');
-            const data = await response.json();
-            return data.ip;
-        } catch (e) {
-            console.error('Error fetching IP:', e);
-            return null;
-        }
-    };
-
-    const checkIfVoted = async () => {
-        const ip = await getIp();
-        if (!ip) return;
-
-        const { data } = await supabase
-            .from('votes')
-            .select('id')
-            .eq('ip_address', ip);
-
-        if (data && data.length > 0) {
+        const storedVote = localStorage.getItem('hasVotedSuperBowl');
+        if (storedVote) {
             setHasVoted(true);
             setShowResults(true);
             fetchResults();
         }
-    };
+    }, []);
 
     const fetchResults = async () => {
         const { data, error } = await supabase
@@ -99,27 +77,9 @@ const SuperBowlPoll: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const ip = await getIp();
-        if (!ip) {
-            setError('No pudimos verificar tu conexión. Intenta de nuevo.');
-            setLoading(false);
-            return;
-        }
-
-        // Check again just in case
-        const { data: existingVote } = await supabase
-            .from('votes')
-            .select('id')
-            .eq('ip_address', ip)
-            .single();
-
-        if (existingVote) {
-            setHasVoted(true);
-            setShowResults(true);
-            setLoading(false);
-            fetchResults();
-            return;
-        }
+        // Generate a random client ID to store in the DB instead of IP
+        // This allows us to satisfy the column requirement without blocking shared IPs
+        const clientId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
         const { error: insertError } = await supabase
             .from('votes')
@@ -127,7 +87,7 @@ const SuperBowlPoll: React.FC = () => {
                 {
                     option: selectedOption,
                     custom_option: selectedOption === 'Otro' ? customOption : null,
-                    ip_address: ip
+                    ip_address: `browser-${clientId}` // Prefix to identify these as non-IPs
                 }
             ]);
 
@@ -135,6 +95,7 @@ const SuperBowlPoll: React.FC = () => {
             setError('Hubo un error al registrar tu voto. Intenta más tarde.');
             console.error(insertError);
         } else {
+            localStorage.setItem('hasVotedSuperBowl', 'true');
             setHasVoted(true);
             setShowResults(true);
             fetchResults();
