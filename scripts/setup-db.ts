@@ -78,18 +78,7 @@ const seedData = async () => {
         if (parseInt(membersCount.rows[0].count) === 0) {
             console.log('Seeding members...');
             const members = [
-                {
-                    name: "Julieta Beatriz Tellez Ojeda",
-                    role: "Socio Activo",
-                    profession: "Broker de Seguros",
-                    shortDescription: "Especialista en protección patrimonial y seguros.",
-                    businessHelp: "Asesoría en seguros de vida, gastos médicos y daños.",
-                    imageUrl: "/julieta-tellez.jpeg",
-                    email: "julieta.tellez@example.com",
-                    whatsapp: "522220000000",
-                    birthday: "01/01",
-                    socials: { linkedin: "https://linkedin.com" }
-                },
+
                 {
                     name: "Sixto Matrínez Garrido",
                     role: "Socio Activo",

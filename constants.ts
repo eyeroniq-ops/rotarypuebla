@@ -60,19 +60,7 @@ export const CLUB_MEMBERS: Member[] = [
     businessUrl: "https://strateggia.com",
     socials: {}
   },
-  {
-    id: "3",
-    name: "Julieta Beatriz Téllez Ojeda",
-    role: "Socio Activo",
-    profession: "Booker de seguros",
-    shortDescription: "Especialista en protección patrimonial y seguros.",
-    businessHelp: "Asesoría en seguros de vida, gastos médicos y daños.",
-    imageUrl: "/foto_julieta_beatriz.jpg",
-    email: "julieta.tellez@example.com",
-    whatsapp: "522220000000",
-    birthday: "01/01",
-    socials: {}
-  },
+
   {
     id: "7",
     name: "Karla Mariana Silva Revilla",
