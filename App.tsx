@@ -9,6 +9,7 @@ import Gallery from './components/Gallery';
 import Footer from './components/Footer';
 import JoinUs from './components/JoinUs';
 import AdminDashboard from './components/AdminDashboard';
+import Services from './components/Services';
 
 function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -21,6 +22,7 @@ function App() {
         <Hero />
         <About />
         <JoinUs />
+        <Services />
         <Events />
         <Directory />
         <Gallery />

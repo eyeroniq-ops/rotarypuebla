@@ -1,5 +1,4 @@
-import { Member, GalleryItem, Event } from './types';
-
+import { Member, GalleryItem, Event, RotaryService } from './types';
 export const ROTARY_BLUE = "#005DAA";
 export const ROTARY_GOLD = "#F7A81B";
 
@@ -8,7 +7,7 @@ export const CLUB_MEMBERS: Member[] = [
     id: "10",
     name: "Jorge Angulo",
     role: "Presidente",
-    profession: "Psicólogo",
+    profession: "Psicólogo Especialista en Adicciones",
     shortDescription: "Líder comprometido con el servicio y la comunidad.",
     businessHelp: "Soluciones en adicciones.",
     imageUrl: "/foto_jorge_angulo.jpg",
@@ -221,5 +220,14 @@ export const UPCOMING_EVENTS: Event[] = [
     location: "Hotel Sede",
     description: "Mes del Amor y la Amistad. Incluye abotonamiento de nuevo socio, planeación de Super Bowl y tamales, y misión: Teslas para los Niños.",
     imageUrl: "/sesion-ordinaria-febrero.jpg"
+  }
+];
+
+export const ROTARY_SERVICES: RotaryService[] = [
+  {
+    id: "s1",
+    title: "Primera Reunión de Socios Fundadores",
+    description: "Iniciativa fundacional del club para planificar nuestros próximos proyectos de impacto comunitario.",
+    imageUrl: "/servicios/Primera_Reunion_de_Socios_Fundadores.jpeg"
   }
 ];
