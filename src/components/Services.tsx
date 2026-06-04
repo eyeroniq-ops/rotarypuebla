@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Briefcase } from 'lucide-react';
-import { ROTARY_SERVICES } from '../constants';
+import { ROTARY_SERVICES } from '../../constants';
 
 export default function Services() {
   const [currentIndex, setCurrentIndex] = useState(0);
