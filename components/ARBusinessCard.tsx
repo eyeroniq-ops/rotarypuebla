@@ -22,7 +22,7 @@ export const ARBusinessCard: React.FC = () => {
         const mindarThree = new MindARThree({
             container: containerRef.current,
             imageTargetSrc: '/targets.mind?v=' + Date.now(),
-            maxTrack: 2,
+            maxTrack: 1,
             uiLoading: 'no',
             uiScanning: 'no',
             uiError: 'yes',
@@ -34,7 +34,6 @@ export const ARBusinessCard: React.FC = () => {
         const { renderer, scene, camera } = mindarThree;
         
         const anchor0 = mindarThree.addAnchor(0);
-        const anchor1 = mindarThree.addAnchor(1);
 
         // --- VIDEO TEXTURE ---
         const video = document.createElement("video");
@@ -44,8 +43,6 @@ export const ARBusinessCard: React.FC = () => {
         video.muted = true;
         video.playsInline = true;
 
-        video.playsInline = true;
-        
         // Mobile browsers require load() to trigger loadedmetadata for unattached videos
         video.load();
 
@@ -54,16 +51,13 @@ export const ARBusinessCard: React.FC = () => {
         const material = new THREE.MeshBasicMaterial({ map: new THREE.VideoTexture(video) });
         
         const mesh0 = new THREE.Mesh(geometry, material);
-        const mesh1 = new THREE.Mesh(geometry, material);
         
         anchor0.group.add(mesh0);
-        anchor1.group.add(mesh1);
 
         video.addEventListener("loadedmetadata", () => {
             const aspect = video.videoHeight / video.videoWidth;
             geometry.dispose();
             mesh0.geometry = new THREE.PlaneGeometry(1, aspect);
-            mesh1.geometry = new THREE.PlaneGeometry(1, aspect);
         });
 
         const start = async () => {
@@ -85,7 +79,7 @@ export const ARBusinessCard: React.FC = () => {
         // Monitor tracking status
         let lastVisible = false;
         const updateLoop = () => {
-            const isVisible = anchor0.visible || anchor1.visible;
+            const isVisible = anchor0.visible;
             if (isVisible !== lastVisible) {
                 lastVisible = isVisible;
                 const newStatus = lastVisible ? 'OBJETIVO DETECTADO' : 'ESCANEANDO...';
