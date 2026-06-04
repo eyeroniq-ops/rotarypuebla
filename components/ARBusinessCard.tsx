@@ -22,7 +22,7 @@ export const ARBusinessCard: React.FC = () => {
         const mindarThree = new MindARThree({
             container: containerRef.current,
             imageTargetSrc: '/targets.mind',
-            maxTrack: 1,
+            maxTrack: 2,
             uiLoading: 'no',
             uiScanning: 'no',
             uiError: 'yes',
@@ -32,21 +32,30 @@ export const ARBusinessCard: React.FC = () => {
 
         mindArRef.current = mindarThree;
         const { renderer, scene, camera } = mindarThree;
-        const anchor = mindarThree.addAnchor(0);
+        
+        const anchor0 = mindarThree.addAnchor(0);
+        const anchor1 = mindarThree.addAnchor(1);
 
-        // --- LIGHTING ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-        scene.add(ambientLight);
-        const pointLight = new THREE.PointLight(0xffffff, 1);
-        pointLight.position.set(0, 10, 10);
-        scene.add(pointLight);
+        // --- VIDEO TEXTURE ---
+        const video = document.createElement("video");
+        video.src = "/VIDEO.mp4";
+        video.crossOrigin = "anonymous";
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
 
-        // --- TEST CUBE ---
-        const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-        const material = new THREE.MeshNormalMaterial();
-        const cube = new THREE.Mesh(geometry, material);
-        cube.position.set(0, 0, 0);
-        anchor.group.add(cube);
+        video.addEventListener("loadedmetadata", () => {
+            const aspect = video.videoHeight / video.videoWidth;
+            // The width in MindAR is usually normalized to 1 unit
+            const geometry = new THREE.PlaneGeometry(1, aspect);
+            const material = new THREE.MeshBasicMaterial({ map: new THREE.VideoTexture(video) });
+            
+            const mesh0 = new THREE.Mesh(geometry, material);
+            const mesh1 = new THREE.Mesh(geometry, material);
+            
+            anchor0.group.add(mesh0);
+            anchor1.group.add(mesh1);
+        });
 
         const start = async () => {
             try {
@@ -55,8 +64,6 @@ export const ARBusinessCard: React.FC = () => {
                 addLog("MindAR Started OK");
                 
                 renderer.setAnimationLoop(() => {
-                    cube.rotation.x += 0.01;
-                    cube.rotation.y += 0.01;
                     renderer.render(scene, camera);
                 });
             } catch (err) {
@@ -69,11 +76,18 @@ export const ARBusinessCard: React.FC = () => {
         // Monitor tracking status
         let lastVisible = false;
         const updateLoop = () => {
-            if (anchor.visible !== lastVisible) {
-                lastVisible = anchor.visible;
+            const isVisible = anchor0.visible || anchor1.visible;
+            if (isVisible !== lastVisible) {
+                lastVisible = isVisible;
                 const newStatus = lastVisible ? 'OBJETIVO DETECTADO' : 'ESCANEANDO...';
                 setStatus(newStatus);
                 addLog(`Status: ${newStatus}`);
+                
+                if (lastVisible) {
+                    video.play().catch(e => console.warn("Video play error", e));
+                } else {
+                    video.pause();
+                }
             }
             requestAnimationFrame(updateLoop);
         };
