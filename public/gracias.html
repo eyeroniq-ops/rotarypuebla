@@ -4,120 +4,225 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Rotary Puebla AR</title>
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"></script>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { overflow: hidden; background: #000; font-family: sans-serif; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Helvetica Neue', sans-serif; }
+
+      #ar-container { width: 100vw; height: 100vh; position: relative; }
+
+      /* Make camera video + canvas fill screen */
+      #ar-container video,
+      #ar-container canvas {
+        position: absolute !important;
+        top: 0 !important; left: 0 !important;
+        width: 100% !important; height: 100% !important;
+        object-fit: cover !important;
+      }
 
       #status-badge {
-        position: fixed;
-        top: 20px;
-        left: 50%;
+        position: fixed; top: 20px; left: 50%;
         transform: translateX(-50%);
+        padding: 10px 24px; border-radius: 30px;
+        font-weight: bold; font-size: 14px; letter-spacing: 1px;
+        color: white; white-space: nowrap;
         background: rgba(0, 36, 108, 0.85);
-        color: white;
-        padding: 10px 24px;
-        border-radius: 30px;
-        font-weight: bold;
-        letter-spacing: 1px;
         border: 1px solid #F7A81B;
-        box-shadow: 0 0 15px rgba(247,168,27,0.5);
-        z-index: 999;
+        box-shadow: 0 0 15px rgba(247,168,27,0.4);
         transition: background 0.3s ease;
-        pointer-events: none;
-        white-space: nowrap;
+        pointer-events: none; z-index: 999;
       }
-      #status-badge.found {
-        background: rgba(247, 168, 27, 0.9);
-      }
+      #status-badge.found { background: rgba(247, 168, 27, 0.92); color: #001540; }
 
       #bottom-label {
-        position: fixed;
-        bottom: 20px;
-        left: 0; right: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        pointer-events: none;
-        z-index: 999;
+        position: fixed; bottom: 20px; left: 0; right: 0;
+        display: flex; flex-direction: column; align-items: center;
+        pointer-events: none; z-index: 999;
       }
-      #bottom-label .title {
-        font-size: 16px;
-        font-weight: bold;
-        letter-spacing: 2px;
-        color: #F7A81B;
+      #bottom-label .title { font-size: 16px; font-weight: bold; letter-spacing: 2px; color: #F7A81B; }
+      #bottom-label .sub   { font-size: 12px; margin-top: 4px; color: rgba(255,255,255,0.65); }
+
+      /* Scanning ring animation */
+      #scan-ring {
+        position: fixed; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px; height: 200px;
+        border: 2px solid rgba(247,168,27,0.6);
+        border-radius: 8px;
+        pointer-events: none; z-index: 998;
+        animation: scanPulse 2s infinite;
+        display: none;
       }
-      #bottom-label .subtitle {
-        font-size: 12px;
-        margin-top: 4px;
-        color: rgba(255,255,255,0.7);
+      #scan-ring::before, #scan-ring::after {
+        content: '';
+        position: absolute;
+        width: 20px; height: 20px;
+        border-color: #F7A81B; border-style: solid;
       }
+      #scan-ring::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; }
+      #scan-ring::after  { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
+      @keyframes scanPulse {
+        0%,100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+        50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.05); }
+      }
+      #scan-ring.active { display: block; }
     </style>
   </head>
   <body>
 
-    <div id="status-badge">ESCANEANDO...</div>
+    <div id="ar-container"></div>
+    <div id="status-badge">CARGANDO...</div>
+    <div id="scan-ring"></div>
 
     <div id="bottom-label">
       <div class="title">ROTARY INTERNATIONAL</div>
-      <div class="subtitle">ESCANEA LA TARJETA ROTARY PARA CONECTAR</div>
+      <div class="sub">ESCANEA LA TARJETA ROTARY PARA CONECTAR</div>
     </div>
 
-    <a-scene
-      mindar-image="imageTargetSrc: /targets.mind; maxTrack: 2; autoStart: true; uiLoading: no; uiScanning: no; uiError: no;"
-      color-space="sRGB"
-      renderer="colorManagement: true"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false">
-
-      <a-assets>
-        <video
-          id="ar-video"
-          src="/VIDEO.mp4"
-          loop
-          muted
-          playsinline
-          webkit-playsinline
-          preload="auto"
-          crossorigin="anonymous">
-        </video>
-      </a-assets>
-
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <!-- Target 0 (T1) -->
-      <a-entity mindar-image-target="targetIndex: 0">
-        <a-video src="#ar-video" width="1" height="0.5625" position="0 0 0"></a-video>
-      </a-entity>
-
-      <!-- Target 1 (T2) -->
-      <a-entity mindar-image-target="targetIndex: 1">
-        <a-video src="#ar-video" width="1" height="0.5625" position="0 0 0"></a-video>
-      </a-entity>
-
-    </a-scene>
-
     <script>
-      const badge = document.getElementById('status-badge');
-      const video = document.getElementById('ar-video');
+      // ─── CONFIG ────────────────────────────────────────────────
+      const TARGET_FILES  = ['/target-t1.mind', '/target-t2.mind'];
+      const SWITCH_DELAY  = 3000;   // ms antes de alternar si no detecta
+      const GRACE_PERIOD  = 4000;   // ms de gracia antes de parar video
+      // ───────────────────────────────────────────────────────────
 
-      // Update badge when any target is found/lost
-      document.querySelector('a-scene').addEventListener('loaded', () => {
-        const targets = document.querySelectorAll('[mindar-image-target]');
+      const { MindARThree } = window.MINDAR.IMAGE;
+      const badge    = document.getElementById('status-badge');
+      const scanRing = document.getElementById('scan-ring');
+      const container = document.getElementById('ar-container');
 
-        targets.forEach(target => {
-          target.addEventListener('targetFound', () => {
-            badge.textContent = '¡OBJETIVO DETECTADO!';
-            badge.classList.add('found');
-            video.play().catch(() => {});
-          });
-          target.addEventListener('targetLost', () => {
-            badge.textContent = 'ESCANEANDO...';
-            badge.classList.remove('found');
-          });
+      let mindar    = null;
+      let rendererRef = null;
+      let videoEl   = null;
+      let currentIdx = 0;
+      let switchTimer   = null;
+      let graceTimer    = null;
+      let detected  = false;
+      let gracePending = false;
+
+      // ── Video element (created once, reused) ──
+      function getVideo() {
+        if (videoEl) return videoEl;
+        videoEl = document.createElement('video');
+        videoEl.src = '/VIDEO.mp4';
+        videoEl.loop = true;
+        videoEl.muted = true;
+        videoEl.playsInline = true;
+        videoEl.setAttribute('playsinline', '');
+        videoEl.setAttribute('webkit-playsinline', '');
+        videoEl.load();
+        return videoEl;
+      }
+
+      // ── UI helpers ──
+      function setStatus(state) {
+        if (state === 'loading') {
+          badge.textContent = 'CARGANDO...';
+          badge.classList.remove('found');
+          scanRing.classList.remove('active');
+        } else if (state === 'scanning') {
+          badge.textContent = 'ESCANEANDO...';
+          badge.classList.remove('found');
+          scanRing.classList.add('active');
+        } else if (state === 'found') {
+          badge.textContent = '¡TARJETA DETECTADA!';
+          badge.classList.add('found');
+          scanRing.classList.remove('active');
+        }
+      }
+
+      // ── Stop current MindAR session ──
+      async function stopAR() {
+        clearTimeout(switchTimer);
+        clearTimeout(graceTimer);
+        if (rendererRef) rendererRef.setAnimationLoop(null);
+        if (mindar) {
+          try { mindar.stop(); } catch(e) {}
+          mindar = null;
+        }
+        // Clean canvas/video injected by MindAR
+        container.querySelectorAll('canvas, video').forEach(el => {
+          if (el !== videoEl) el.remove();
         });
-      });
+      }
+
+      // ── Start MindAR with a given target file ──
+      async function startAR(fileIndex) {
+        await stopAR();
+        currentIdx = fileIndex;
+        detected   = false;
+        gracePending = false;
+        setStatus('loading');
+
+        const video = getVideo();
+
+        const m = new MindARThree({
+          container,
+          imageTargetSrc: TARGET_FILES[fileIndex],
+          maxTrack: 1,
+          uiLoading: 'no',
+          uiScanning: 'no',
+          uiError: 'no',
+        });
+        mindar = m;
+
+        const { renderer, scene, camera } = m;
+        rendererRef = renderer;
+        const anchor = m.addAnchor(0);
+
+        const texture  = new THREE.VideoTexture(video);
+        const material = new THREE.MeshBasicMaterial({ map: texture });
+        const plane    = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.5625), material);
+        anchor.group.add(plane);
+
+        video.addEventListener('loadedmetadata', () => {
+          const aspect = video.videoHeight / video.videoWidth;
+          plane.geometry = new THREE.PlaneGeometry(1, aspect);
+        }, { once: true });
+
+        anchor.onTargetFound = () => {
+          detected     = true;
+          gracePending = false;
+          clearTimeout(graceTimer);
+          clearTimeout(switchTimer);
+          setStatus('found');
+          video.play().catch(() => {});
+        };
+
+        anchor.onTargetLost = () => {
+          if (!detected) return;
+          gracePending = true;
+          graceTimer = setTimeout(() => {
+            gracePending = false;
+            detected     = false;
+            video.pause();
+            setStatus('scanning');
+            // switch to other target
+            startAR((currentIdx + 1) % TARGET_FILES.length);
+          }, GRACE_PERIOD);
+        };
+
+        try {
+          await m.start();
+          setStatus('scanning');
+          renderer.setAnimationLoop(() => renderer.render(scene, camera));
+
+          // Auto-switch if nothing detected
+          switchTimer = setTimeout(() => {
+            if (!detected && !gracePending) {
+              startAR((currentIdx + 1) % TARGET_FILES.length);
+            }
+          }, SWITCH_DELAY);
+
+        } catch(err) {
+          console.error('AR Error:', err);
+          badge.textContent = 'ERROR: ' + err;
+        }
+      }
+
+      // ── Boot ──
+      startAR(0);
     </script>
   </body>
 </html>
