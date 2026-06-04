@@ -56,7 +56,7 @@ export const ARBusinessCard: React.FC = () => {
 
         video.addEventListener("loadedmetadata", () => {
             const aspect = video.videoHeight / video.videoWidth;
-            geometry.dispose();
+            addLog(`Video: ${video.videoWidth}x${video.videoHeight} ratio=${aspect.toFixed(2)}`);
             mesh0.geometry = new THREE.PlaneGeometry(1, aspect);
         });
 
@@ -125,7 +125,8 @@ export const ARBusinessCard: React.FC = () => {
 
             {/* Debug Logs Overlay */}
             <div style={{
-                display: 'none',
+                display: 'flex',
+                flexDirection: 'column',
                 position: 'absolute',
                 top: '80px',
                 left: '10px',
