@@ -22,7 +22,7 @@ export const ARBusinessCard: React.FC = () => {
         const mindarThree = new MindARThree({
             container: containerRef.current,
             imageTargetSrc: '/targets.mind',
-            maxTrack: 1,
+            maxTrack: 2,
             uiLoading: 'no',
             uiScanning: 'no',
             uiError: 'no',
@@ -30,7 +30,8 @@ export const ARBusinessCard: React.FC = () => {
 
         mindArRef.current = mindarThree;
         const { renderer, scene, camera } = mindarThree;
-        const anchor = mindarThree.addAnchor(0);
+        const anchor0 = mindarThree.addAnchor(0);
+        const anchor1 = mindarThree.addAnchor(1);
 
         // Prepare the video element
         const video = document.createElement('video');
@@ -42,31 +43,38 @@ export const ARBusinessCard: React.FC = () => {
         video.setAttribute('webkit-playsinline', '');
         video.load();
 
-        // Create a plane with the video texture
+        // Create a plane with the video texture — misma para ambos targets
         const videoTexture = new THREE.VideoTexture(video);
-        const geometry = new THREE.PlaneGeometry(1, 0.5625); // default 16:9, updated on metadata
         const material = new THREE.MeshBasicMaterial({ map: videoTexture });
-        const plane = new THREE.Mesh(geometry, material);
-        anchor.group.add(plane);
+        
+        const plane0 = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.5625), material);
+        const plane1 = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.5625), material);
+        anchor0.group.add(plane0);
+        anchor1.group.add(plane1);
 
         video.addEventListener('loadedmetadata', () => {
             const aspect = video.videoHeight / video.videoWidth;
-            plane.geometry = new THREE.PlaneGeometry(1, aspect);
+            plane0.geometry = new THREE.PlaneGeometry(1, aspect);
+            plane1.geometry = new THREE.PlaneGeometry(1, aspect);
             addLog(`Video listo: ${video.videoWidth}x${video.videoHeight}`);
         });
 
-        // Track visibility
-        anchor.onTargetFound = () => {
+        // Track visibility — cualquiera de los 2 targets activa el video
+        const onFound = () => {
             addLog('¡Target encontrado!');
             setStatus('OBJETIVO DETECTADO');
             video.play().catch(e => addLog('Error video: ' + e));
         };
-
-        anchor.onTargetLost = () => {
+        const onLost = () => {
             addLog('Target perdido');
             setStatus('ESCANEANDO...');
             video.pause();
         };
+
+        anchor0.onTargetFound = onFound;
+        anchor0.onTargetLost = onLost;
+        anchor1.onTargetFound = onFound;
+        anchor1.onTargetLost = onLost;
 
         const start = async () => {
             try {
