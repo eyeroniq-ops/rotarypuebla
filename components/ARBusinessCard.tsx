@@ -44,17 +44,26 @@ export const ARBusinessCard: React.FC = () => {
         video.muted = true;
         video.playsInline = true;
 
+        video.playsInline = true;
+        
+        // Mobile browsers require load() to trigger loadedmetadata for unattached videos
+        video.load();
+
+        // Create meshes immediately with default aspect, update later
+        const geometry = new THREE.PlaneGeometry(1, 1);
+        const material = new THREE.MeshBasicMaterial({ map: new THREE.VideoTexture(video) });
+        
+        const mesh0 = new THREE.Mesh(geometry, material);
+        const mesh1 = new THREE.Mesh(geometry, material);
+        
+        anchor0.group.add(mesh0);
+        anchor1.group.add(mesh1);
+
         video.addEventListener("loadedmetadata", () => {
             const aspect = video.videoHeight / video.videoWidth;
-            // The width in MindAR is usually normalized to 1 unit
-            const geometry = new THREE.PlaneGeometry(1, aspect);
-            const material = new THREE.MeshBasicMaterial({ map: new THREE.VideoTexture(video) });
-            
-            const mesh0 = new THREE.Mesh(geometry, material);
-            const mesh1 = new THREE.Mesh(geometry, material);
-            
-            anchor0.group.add(mesh0);
-            anchor1.group.add(mesh1);
+            geometry.dispose();
+            mesh0.geometry = new THREE.PlaneGeometry(1, aspect);
+            mesh1.geometry = new THREE.PlaneGeometry(1, aspect);
         });
 
         const start = async () => {
