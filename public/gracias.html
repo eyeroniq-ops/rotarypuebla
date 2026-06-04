@@ -1,28 +1,123 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rotary Puebla AR</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { overflow: hidden; background: #000; font-family: sans-serif; }
+
+      #status-badge {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 36, 108, 0.85);
+        color: white;
+        padding: 10px 24px;
+        border-radius: 30px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        border: 1px solid #F7A81B;
+        box-shadow: 0 0 15px rgba(247,168,27,0.5);
+        z-index: 999;
+        transition: background 0.3s ease;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      #status-badge.found {
+        background: rgba(247, 168, 27, 0.9);
+      }
+
+      #bottom-label {
+        position: fixed;
+        bottom: 20px;
+        left: 0; right: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        pointer-events: none;
+        z-index: 999;
+      }
+      #bottom-label .title {
+        font-size: 16px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        color: #F7A81B;
+      }
+      #bottom-label .subtitle {
+        font-size: 12px;
+        margin-top: 4px;
+        color: rgba(255,255,255,0.7);
+      }
+    </style>
   </head>
   <body>
-    <a-scene mindar-image="imageTargetSrc: /targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+
+    <div id="status-badge">ESCANEANDO...</div>
+
+    <div id="bottom-label">
+      <div class="title">ROTARY INTERNATIONAL</div>
+      <div class="subtitle">ESCANEA LA TARJETA ROTARY PARA CONECTAR</div>
+    </div>
+
+    <a-scene
+      mindar-image="imageTargetSrc: /targets.mind; autoStart: true; uiLoading: no; uiScanning: no; uiError: no;"
+      color-space="sRGB"
+      renderer="colorManagement: true"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false">
 
       <a-assets>
-        <video id="ar-video" src="/VIDEO.mp4" loop muted playsinline webkit-playsinline preload="auto"></video>
+        <video
+          id="ar-video"
+          src="/VIDEO.mp4"
+          loop
+          muted
+          playsinline
+          webkit-playsinline
+          preload="auto"
+          crossorigin="anonymous">
+        </video>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
+      <!-- Target 0 (T1) -->
       <a-entity mindar-image-target="targetIndex: 0">
         <a-video src="#ar-video" width="1" height="0.5625" position="0 0 0"></a-video>
       </a-entity>
 
+      <!-- Target 1 (T2) -->
       <a-entity mindar-image-target="targetIndex: 1">
         <a-video src="#ar-video" width="1" height="0.5625" position="0 0 0"></a-video>
       </a-entity>
 
     </a-scene>
+
+    <script>
+      const badge = document.getElementById('status-badge');
+      const video = document.getElementById('ar-video');
+
+      // Update badge when any target is found/lost
+      document.querySelector('a-scene').addEventListener('loaded', () => {
+        const targets = document.querySelectorAll('[mindar-image-target]');
+
+        targets.forEach(target => {
+          target.addEventListener('targetFound', () => {
+            badge.textContent = '¡OBJETIVO DETECTADO!';
+            badge.classList.add('found');
+            video.play().catch(() => {});
+          });
+          target.addEventListener('targetLost', () => {
+            badge.textContent = 'ESCANEANDO...';
+            badge.classList.remove('found');
+          });
+        });
+      });
+    </script>
   </body>
 </html>
