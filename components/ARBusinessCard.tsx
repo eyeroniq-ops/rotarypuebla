@@ -18,7 +18,7 @@ export const ARBusinessCard: React.FC = () => {
 
         const mindarThree = new MindARThree({
             container: containerRef.current,
-            imageTargetSrc: '/tar1.mind',
+            imageTargetSrc: '/targets.mind',
             maxTrack: 1,
             uiLoading: 'no',
             uiScanning: 'no',
