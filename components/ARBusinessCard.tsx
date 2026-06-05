@@ -3,26 +3,32 @@ import * as THREE from 'three';
 // @ts-ignore
 import { MindARThree } from 'mind-ar/dist/mindar-image-three.prod.js';
 
-type ARStatus = 'CARGANDO...' | 'ESCANEANDO...' | 'OBJETIVO DETECTADO' | 'ERROR AL INICIAR AR';
+const TARGET_SRC = '/targets.mind';
+const VIDEO_SRC = '/VIDEO.mp4';
 
 export const ARBusinessCard: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const mindArRef = useRef<any>(null);
-    const videoRef = useRef<HTMLVideoElement | null>(null);
-    const [status, setStatus] = useState<ARStatus>('CARGANDO...');
+    const [status, setStatus] = useState<'ESCANEANDO...' | 'OBJETIVO DETECTADO'>('ESCANEANDO...');
+    const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+    const addLog = (msg: string) => {
+        console.log(msg);
+        setDebugLogs(prev => [...prev.slice(-10), msg]);
+    };
 
     useEffect(() => {
         if (!containerRef.current || mindArRef.current) return;
-        let isDisposed = false;
-        let loopId = 0;
+
+        addLog('Initializing AR Engine...');
 
         const mindarThree = new MindARThree({
             container: containerRef.current,
-            imageTargetSrc: '/targets.mind',
+            imageTargetSrc: TARGET_SRC,
             maxTrack: 1,
             uiLoading: 'no',
             uiScanning: 'no',
-            uiError: 'yes',
+            uiError: 'no',
             filterMinCF: 0.0001,
             filterBeta: 0.001,
         });
@@ -32,16 +38,14 @@ export const ARBusinessCard: React.FC = () => {
         const anchor = mindarThree.addAnchor(0);
 
         const video = document.createElement('video');
-        video.src = '/VIDEO.mp4';
+        video.src = VIDEO_SRC;
         video.loop = true;
         video.muted = true;
         video.playsInline = true;
-        video.crossOrigin = 'anonymous';
         video.preload = 'auto';
         video.setAttribute('playsinline', '');
         video.setAttribute('webkit-playsinline', '');
         video.load();
-        videoRef.current = video;
 
         const texture = new THREE.VideoTexture(video);
         texture.encoding = THREE.sRGBEncoding;
@@ -60,73 +64,144 @@ export const ARBusinessCard: React.FC = () => {
 
         video.addEventListener('loadedmetadata', () => {
             const aspect = video.videoHeight / video.videoWidth;
+            plane.geometry.dispose();
             plane.geometry = new THREE.PlaneGeometry(1, aspect);
         }, { once: true });
 
-        anchor.onTargetFound = () => {
-            if (isDisposed) return;
-            setStatus('OBJETIVO DETECTADO');
-            video.play().catch((err) => {
-                console.warn('Video playback blocked:', err);
-            });
-        };
-
-        anchor.onTargetLost = () => {
-            if (isDisposed) return;
-            setStatus('ESCANEANDO...');
-            video.pause();
-        };
-
         const start = async () => {
             try {
+                addLog('Starting MindAR...');
                 await mindarThree.start();
-                if (isDisposed) return;
-                setStatus('ESCANEANDO...');
-                renderer.setAnimationLoop(() => renderer.render(scene, camera));
+                addLog('MindAR Started OK');
+
+                renderer.setAnimationLoop(() => {
+                    renderer.render(scene, camera);
+                });
             } catch (err) {
-                console.error('AR Error:', err);
-                if (!isDisposed) setStatus('ERROR AL INICIAR AR');
+                addLog(`ERROR Starting: ${err}`);
+                console.error('MindAR start error:', err);
             }
         };
+
         start();
 
+        let lastVisible = false;
         const updateLoop = () => {
+            if (anchor.visible !== lastVisible) {
+                lastVisible = anchor.visible;
+                const newStatus = lastVisible ? 'OBJETIVO DETECTADO' : 'ESCANEANDO...';
+                setStatus(newStatus);
+                addLog(`Status: ${newStatus}`);
+            }
+
             if (anchor.visible && video.paused) {
                 video.play().catch(() => {});
+            } else if (!anchor.visible && !video.paused) {
+                video.pause();
             }
-            loopId = requestAnimationFrame(updateLoop);
+
+            requestAnimationFrame(updateLoop);
         };
-        loopId = requestAnimationFrame(updateLoop);
+        const loopId = requestAnimationFrame(updateLoop);
 
         return () => {
-            isDisposed = true;
+            addLog('Cleaning up AR...');
             cancelAnimationFrame(loopId);
-            renderer.setAnimationLoop(null);
             video.pause();
             texture.dispose();
             material.dispose();
             plane.geometry.dispose();
-            try { mindarThree.stop(); } catch (e) {}
+
+            if (mindarThree) {
+                try {
+                    mindarThree.stop();
+                    renderer.setAnimationLoop(null);
+                } catch (e) {
+                    console.warn('Cleanup error', e);
+                }
+            }
+
             mindArRef.current = null;
-            videoRef.current = null;
         };
     }, []);
 
     return (
-        <div style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, overflow: 'hidden', background: '#000' }}>
-            <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-            <div style={{ position: 'fixed', top: '20px', left: 0, right: 0, display: 'flex', justifyContent: 'center', pointerEvents: 'none', zIndex: 10 }}>
-                <div style={{
-                    background: status === 'OBJETIVO DETECTADO' ? 'rgba(247,168,27,0.92)' : 'rgba(0,36,108,0.85)',
-                    color: status === 'OBJETIVO DETECTADO' ? '#001540' : 'white',
-                    padding: '10px 24px', borderRadius: '30px', fontFamily: 'sans-serif',
-                    fontWeight: 'bold', letterSpacing: '1px', border: '1px solid #F7A81B',
-                    boxShadow: '0 0 15px rgba(247,168,27,0.4)', transition: 'all 0.3s ease'
-                }}>{status}</div>
+        <div style={{
+            width: '100vw',
+            height: '100vh',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            overflow: 'hidden',
+            background: 'transparent',
+        }}>
+            <div ref={containerRef} style={{ width: '100vw', height: '100vh', position: 'absolute', top: 0, left: 0 }} />
+
+            <div style={{
+                display: 'none',
+                position: 'absolute',
+                top: '80px',
+                left: '10px',
+                right: '10px',
+                background: 'rgba(0,0,0,0.5)',
+                color: '#0f0',
+                fontFamily: 'monospace',
+                fontSize: '10px',
+                padding: '5px',
+                borderRadius: '5px',
+                pointerEvents: 'none',
+                zIndex: 100,
+            }}>
+                {debugLogs.map((log, i) => (
+                    <div key={i}>&gt; {log}</div>
+                ))}
             </div>
-            <div style={{ position: 'fixed', bottom: '20px', left: 0, right: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none', zIndex: 10 }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '2px', color: '#F7A81B' }}>ROTARY INTERNATIONAL</div>
-                <div style={{ fontSize: '12px', marginTop: '4px', color: 'rgba(255,255,255,0.7)' }}>ESCANEA LA TARJETA ROTARY PARA CONECTAR</div>
+
+            <div style={{
+                position: 'absolute',
+                top: '20px',
+                left: '0',
+                right: '0',
+                display: 'flex',
+                justifyContent: 'center',
+                pointerEvents: 'none',
+                zIndex: 10,
+            }}>
+                <div style={{
+                    background: status === 'OBJETIVO DETECTADO' ? 'rgba(247, 168, 27, 0.9)' : 'rgba(0, 36, 108, 0.8)',
+                    padding: '10px 20px',
+                    borderRadius: '30px',
+                    color: 'white',
+                    fontFamily: 'sans-serif',
+                    border: '1px solid #F7A81B',
+                    boxShadow: status === 'OBJETIVO DETECTADO' ? '0 0 20px #F7A81B' : '0 0 10px #F7A81B',
+                    transition: 'all 0.3s ease',
+                    fontWeight: 'bold',
+                    letterSpacing: '1px',
+                }}>
+                    {status}
+                </div>
+            </div>
+
+            <div style={{
+                position: 'absolute',
+                bottom: '20px',
+                left: '0',
+                right: '0',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                color: 'white',
+                fontFamily: 'sans-serif',
+                opacity: 0.7,
+                pointerEvents: 'none',
+            }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '2px', color: '#F7A81B' }}>
+                    ROTARY INTERNATIONAL
+                </div>
+                <div style={{ fontSize: '12px', marginTop: '4px' }}>
+                    ESCANEA LA TARJETA ROTARY PARA CONECTAR
+                </div>
             </div>
         </div>
     );
