@@ -6,36 +6,48 @@ import { MindARThree } from 'mind-ar/dist/mindar-image-three.prod.js';
 const TARGET_SRC = '/targets.mind';
 const VIDEO_SRC = '/VIDEO.mp4';
 const QR_CENTER_X = -0.02;
-const QR_CENTER_Y = -0.01;
-const QR_WIDTH = 0.42;
+const QR_CENTER_Y = 0.02;
+const QR_WIDTH = 0.36;
 
-const createSoftEdgeAlphaMap = () => {
-    const size = 512;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
+const createVideoKeyMaterial = (texture: THREE.VideoTexture) => {
+    return new THREE.ShaderMaterial({
+        uniforms: {
+            map: { value: texture },
+        },
+        vertexShader: `
+            varying vec2 vUv;
 
-    if (!ctx) return null;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D map;
+            varying vec2 vUv;
 
-    const gradient = ctx.createRadialGradient(
-        size / 2,
-        size / 2,
-        size * 0.30,
-        size / 2,
-        size / 2,
-        size * 0.68
-    );
-    gradient.addColorStop(0, 'rgba(255,255,255,1)');
-    gradient.addColorStop(0.72, 'rgba(255,255,255,1)');
-    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+            void main() {
+                vec4 color = texture2D(map, vUv);
+                float maxChannel = max(max(color.r, color.g), color.b);
+                float minChannel = min(min(color.r, color.g), color.b);
+                float saturation = maxChannel - minChannel;
+                float whiteAmount = smoothstep(0.72, 0.96, minChannel) * (1.0 - smoothstep(0.08, 0.22, saturation));
 
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, size, size);
+                float edgeX = smoothstep(0.0, 0.13, vUv.x) * smoothstep(0.0, 0.13, 1.0 - vUv.x);
+                float edgeY = smoothstep(0.0, 0.13, vUv.y) * smoothstep(0.0, 0.13, 1.0 - vUv.y);
+                float edgeFade = edgeX * edgeY;
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.needsUpdate = true;
-    return texture;
+                float alpha = (1.0 - whiteAmount) * edgeFade * color.a;
+                if (alpha < 0.03) discard;
+
+                gl_FragColor = vec4(color.rgb, alpha);
+            }
+        `,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        toneMapped: false,
+    });
 };
 
 export const ARBusinessCard: React.FC = () => {
@@ -64,7 +76,7 @@ export const ARBusinessCard: React.FC = () => {
             filterMinCF: 0.0001,
             filterBeta: 0.001,
             warmupTolerance: 1,
-            missTolerance: 4,
+            missTolerance: 0,
         });
 
         mindArRef.current = mindarThree;
@@ -75,24 +87,18 @@ export const ARBusinessCard: React.FC = () => {
         video.src = VIDEO_SRC;
         video.loop = true;
         video.muted = true;
+        video.autoplay = true;
         video.playsInline = true;
         video.preload = 'auto';
+        video.setAttribute('autoplay', '');
+        video.setAttribute('muted', '');
         video.setAttribute('playsinline', '');
         video.setAttribute('webkit-playsinline', '');
         video.load();
 
         const texture = new THREE.VideoTexture(video);
         texture.encoding = THREE.sRGBEncoding;
-        const alphaMap = createSoftEdgeAlphaMap();
-
-        const material = new THREE.MeshBasicMaterial({
-            map: texture,
-            alphaMap: alphaMap || undefined,
-            transparent: true,
-            side: THREE.DoubleSide,
-            toneMapped: false,
-            depthWrite: false,
-        });
+        const material = createVideoKeyMaterial(texture);
 
         const videoAspect = 16 / 9;
         const plane = new THREE.Mesh(
@@ -109,15 +115,28 @@ export const ARBusinessCard: React.FC = () => {
             plane.geometry = new THREE.PlaneGeometry(QR_WIDTH, QR_WIDTH / aspect);
         }, { once: true });
 
+        const tryPlayVideo = () => {
+            video.play().catch((err) => {
+                addLog(`Video play blocked: ${err}`);
+            });
+        };
+
+        const primeVideo = () => {
+            video.play().then(() => {
+                video.pause();
+                video.currentTime = 0;
+            }).catch(() => {});
+        };
+
+        window.addEventListener('touchstart', primeVideo, { once: true, passive: true });
+        window.addEventListener('click', primeVideo, { once: true });
+
         const start = async () => {
             try {
                 addLog('Starting MindAR...');
                 await mindarThree.start();
                 addLog('MindAR Started OK');
-                video.play().then(() => {
-                    video.pause();
-                    video.currentTime = 0;
-                }).catch(() => {});
+                primeVideo();
 
                 renderer.setAnimationLoop(() => {
                     renderer.render(scene, camera);
@@ -140,17 +159,20 @@ export const ARBusinessCard: React.FC = () => {
                 plane.visible = lastVisible;
 
                 if (lastVisible) {
-                    video.play().catch(() => {});
+                    tryPlayVideo();
                 } else {
                     video.pause();
+                    video.currentTime = 0;
                 }
             }
 
-            if (anchor.visible && video.paused) {
-                video.play().catch(() => {});
-            } else if (!anchor.visible && !video.paused) {
-                video.pause();
+            if (anchor.visible) {
+                plane.visible = true;
+                if (video.paused) tryPlayVideo();
+            } else {
                 plane.visible = false;
+                video.pause();
+                video.currentTime = 0;
             }
 
             requestAnimationFrame(updateLoop);
@@ -160,9 +182,10 @@ export const ARBusinessCard: React.FC = () => {
         return () => {
             addLog('Cleaning up AR...');
             cancelAnimationFrame(loopId);
+            window.removeEventListener('touchstart', primeVideo);
+            window.removeEventListener('click', primeVideo);
             video.pause();
             texture.dispose();
-            alphaMap?.dispose();
             material.dispose();
             plane.geometry.dispose();
 
