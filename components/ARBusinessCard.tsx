@@ -8,6 +8,7 @@ const VIDEO_SRC = '/VIDEO.mp4';
 const QR_CENTER_X = -0.02;
 const QR_CENTER_Y = 0.02;
 const QR_WIDTH = 0.36;
+const TARGET_COUNT = 2;
 
 const createVideoKeyMaterial = (texture: THREE.VideoTexture) => {
     return new THREE.ShaderMaterial({
@@ -81,7 +82,7 @@ export const ARBusinessCard: React.FC = () => {
 
         mindArRef.current = mindarThree;
         const { renderer, scene, camera } = mindarThree;
-        const anchor = mindarThree.addAnchor(0);
+        const anchors = Array.from({ length: TARGET_COUNT }, (_, index) => mindarThree.addAnchor(index));
 
         const video = document.createElement('video');
         video.src = VIDEO_SRC;
@@ -101,18 +102,23 @@ export const ARBusinessCard: React.FC = () => {
         const material = createVideoKeyMaterial(texture);
 
         const videoAspect = 16 / 9;
-        const plane = new THREE.Mesh(
-            new THREE.PlaneGeometry(QR_WIDTH, QR_WIDTH / videoAspect),
-            material
-        );
-        plane.position.set(QR_CENTER_X, QR_CENTER_Y, 0.01);
-        plane.visible = false;
-        anchor.group.add(plane);
+        const planes = anchors.map((anchor) => {
+            const plane = new THREE.Mesh(
+                new THREE.PlaneGeometry(QR_WIDTH, QR_WIDTH / videoAspect),
+                material
+            );
+            plane.position.set(QR_CENTER_X, QR_CENTER_Y, 0.01);
+            plane.visible = false;
+            anchor.group.add(plane);
+            return plane;
+        });
 
         video.addEventListener('loadedmetadata', () => {
             const aspect = video.videoWidth / video.videoHeight || videoAspect;
-            plane.geometry.dispose();
-            plane.geometry = new THREE.PlaneGeometry(QR_WIDTH, QR_WIDTH / aspect);
+            planes.forEach((plane) => {
+                plane.geometry.dispose();
+                plane.geometry = new THREE.PlaneGeometry(QR_WIDTH, QR_WIDTH / aspect);
+            });
         }, { once: true });
 
         const tryPlayVideo = () => {
@@ -151,12 +157,14 @@ export const ARBusinessCard: React.FC = () => {
 
         let lastVisible = false;
         const updateLoop = () => {
-            if (anchor.visible !== lastVisible) {
-                lastVisible = anchor.visible;
+            const visibleAnchorIndex = anchors.findIndex((anchor) => anchor.visible);
+            const isVisible = visibleAnchorIndex !== -1;
+
+            if (isVisible !== lastVisible) {
+                lastVisible = isVisible;
                 const newStatus = lastVisible ? 'OBJETIVO DETECTADO' : 'ESCANEANDO...';
                 setStatus(newStatus);
-                addLog(`Status: ${newStatus}`);
-                plane.visible = lastVisible;
+                addLog(`Status: ${newStatus}${visibleAnchorIndex >= 0 ? ` target ${visibleAnchorIndex + 1}` : ''}`);
 
                 if (lastVisible) {
                     tryPlayVideo();
@@ -166,11 +174,13 @@ export const ARBusinessCard: React.FC = () => {
                 }
             }
 
-            if (anchor.visible) {
-                plane.visible = true;
+            planes.forEach((plane, index) => {
+                plane.visible = index === visibleAnchorIndex;
+            });
+
+            if (isVisible) {
                 if (video.paused) tryPlayVideo();
             } else {
-                plane.visible = false;
                 video.pause();
                 video.currentTime = 0;
             }
@@ -187,7 +197,7 @@ export const ARBusinessCard: React.FC = () => {
             video.pause();
             texture.dispose();
             material.dispose();
-            plane.geometry.dispose();
+            planes.forEach((plane) => plane.geometry.dispose());
 
             if (mindarThree) {
                 try {
