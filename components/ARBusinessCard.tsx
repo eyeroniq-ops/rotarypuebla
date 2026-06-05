@@ -26,8 +26,8 @@ const createBackdropMaterial = () => {
             void main() {
                 float edgeX = smoothstep(0.0, 0.18, vUv.x) * smoothstep(0.0, 0.18, 1.0 - vUv.x);
                 float edgeY = smoothstep(0.0, 0.18, vUv.y) * smoothstep(0.0, 0.18, 1.0 - vUv.y);
-                float alpha = edgeX * edgeY * 0.42;
-                gl_FragColor = vec4(0.02, 0.03, 0.05, alpha);
+                float alpha = edgeX * edgeY * 0.52;
+                gl_FragColor = vec4(1.0, 1.0, 1.0, alpha);
             }
         `,
         transparent: true,
