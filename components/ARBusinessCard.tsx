@@ -34,13 +34,14 @@ export const ARBusinessCard: React.FC<Props> = ({ targetFile, targetLabel, onSwi
         if (!containerRef.current || mindArRef.current) return;
 
         const video = getSharedVideo();
+
         const mindarThree = new MindARThree({
             container: containerRef.current,
             imageTargetSrc: targetFile,
             maxTrack: 1,
-            uiLoading: 'no',
-            uiScanning: 'no',
-            uiError: 'no',
+            uiLoading: 'yes',  // Mostrar carga nativa de MindAR
+            uiScanning: 'yes', // Mostrar scanner nativo de MindAR
+            uiError: 'yes',
             filterMinCF: 0.0001,
             filterBeta: 0.001,
         });
@@ -64,25 +65,19 @@ export const ARBusinessCard: React.FC<Props> = ({ targetFile, targetLabel, onSwi
         let lastVisible = false;
         let gracePeriodTimer: ReturnType<typeof setTimeout> | null = null;
         let switchTimer: ReturnType<typeof setTimeout> | null = null;
+        let animLoopId: number | null = null;
 
-        // Auto-switch to other target after 10s if nothing found
-        switchTimer = setTimeout(() => {
-            if (!lastVisible) onSwitch();
-        }, 10000);
-
-        const updateLoop = () => {
+        animLoopId = requestAnimationFrame(function updateLoop() {
             if (anchor.visible !== lastVisible) {
                 lastVisible = anchor.visible;
 
                 if (lastVisible) {
-                    // Target found
                     if (gracePeriodTimer) { clearTimeout(gracePeriodTimer); gracePeriodTimer = null; }
                     if (switchTimer)      { clearTimeout(switchTimer);      switchTimer = null; }
                     setFound(true);
                     setStatus('¡TARJETA DETECTADA!');
                     video.play().catch(() => {});
                 } else {
-                    // Target lost — grace period before switching
                     setFound(false);
                     setStatus(`ESCANEANDO ${targetLabel}...`);
                     gracePeriodTimer = setTimeout(() => {
@@ -91,23 +86,29 @@ export const ARBusinessCard: React.FC<Props> = ({ targetFile, targetLabel, onSwi
                     }, 4000);
                 }
             }
-            requestAnimationFrame(updateLoop);
-        };
-        const loopId = requestAnimationFrame(updateLoop);
+            animLoopId = requestAnimationFrame(updateLoop);
+        });
 
         const start = async () => {
             try {
                 await mindarThree.start();
+
                 renderer.setAnimationLoop(() => renderer.render(scene, camera));
+
+                // Auto-switch after 10s if nothing detected
+                switchTimer = setTimeout(() => {
+                    if (!lastVisible) onSwitch();
+                }, 10000);
+
             } catch (err) {
                 console.error('AR Error:', err);
-                setStatus('ERROR: ' + err);
+                setStatus('ERROR AR');
             }
         };
         start();
 
         return () => {
-            cancelAnimationFrame(loopId);
+            if (animLoopId) cancelAnimationFrame(animLoopId);
             if (gracePeriodTimer) clearTimeout(gracePeriodTimer);
             if (switchTimer)      clearTimeout(switchTimer);
             try {
