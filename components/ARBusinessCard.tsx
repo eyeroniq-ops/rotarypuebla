@@ -5,6 +5,38 @@ import { MindARThree } from 'mind-ar/dist/mindar-image-three.prod.js';
 
 const TARGET_SRC = '/targets.mind';
 const VIDEO_SRC = '/VIDEO.mp4';
+const QR_CENTER_X = -0.02;
+const QR_CENTER_Y = -0.01;
+const QR_WIDTH = 0.42;
+
+const createSoftEdgeAlphaMap = () => {
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) return null;
+
+    const gradient = ctx.createRadialGradient(
+        size / 2,
+        size / 2,
+        size * 0.30,
+        size / 2,
+        size / 2,
+        size * 0.68
+    );
+    gradient.addColorStop(0, 'rgba(255,255,255,1)');
+    gradient.addColorStop(0.72, 'rgba(255,255,255,1)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+};
 
 export const ARBusinessCard: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +64,7 @@ export const ARBusinessCard: React.FC = () => {
             filterMinCF: 0.0001,
             filterBeta: 0.001,
             warmupTolerance: 1,
-            missTolerance: 20,
+            missTolerance: 4,
         });
 
         mindArRef.current = mindarThree;
@@ -51,23 +83,30 @@ export const ARBusinessCard: React.FC = () => {
 
         const texture = new THREE.VideoTexture(video);
         texture.encoding = THREE.sRGBEncoding;
+        const alphaMap = createSoftEdgeAlphaMap();
 
         const material = new THREE.MeshBasicMaterial({
             map: texture,
+            alphaMap: alphaMap || undefined,
+            transparent: true,
             side: THREE.DoubleSide,
             toneMapped: false,
+            depthWrite: false,
         });
 
+        const videoAspect = 16 / 9;
         const plane = new THREE.Mesh(
-            new THREE.PlaneGeometry(1, 0.5625),
+            new THREE.PlaneGeometry(QR_WIDTH, QR_WIDTH / videoAspect),
             material
         );
+        plane.position.set(QR_CENTER_X, QR_CENTER_Y, 0.01);
+        plane.visible = false;
         anchor.group.add(plane);
 
         video.addEventListener('loadedmetadata', () => {
-            const aspect = video.videoHeight / video.videoWidth;
+            const aspect = video.videoWidth / video.videoHeight || videoAspect;
             plane.geometry.dispose();
-            plane.geometry = new THREE.PlaneGeometry(1, aspect);
+            plane.geometry = new THREE.PlaneGeometry(QR_WIDTH, QR_WIDTH / aspect);
         }, { once: true });
 
         const start = async () => {
@@ -75,6 +114,10 @@ export const ARBusinessCard: React.FC = () => {
                 addLog('Starting MindAR...');
                 await mindarThree.start();
                 addLog('MindAR Started OK');
+                video.play().then(() => {
+                    video.pause();
+                    video.currentTime = 0;
+                }).catch(() => {});
 
                 renderer.setAnimationLoop(() => {
                     renderer.render(scene, camera);
@@ -94,12 +137,20 @@ export const ARBusinessCard: React.FC = () => {
                 const newStatus = lastVisible ? 'OBJETIVO DETECTADO' : 'ESCANEANDO...';
                 setStatus(newStatus);
                 addLog(`Status: ${newStatus}`);
+                plane.visible = lastVisible;
+
+                if (lastVisible) {
+                    video.play().catch(() => {});
+                } else {
+                    video.pause();
+                }
             }
 
             if (anchor.visible && video.paused) {
                 video.play().catch(() => {});
             } else if (!anchor.visible && !video.paused) {
                 video.pause();
+                plane.visible = false;
             }
 
             requestAnimationFrame(updateLoop);
@@ -111,6 +162,7 @@ export const ARBusinessCard: React.FC = () => {
             cancelAnimationFrame(loopId);
             video.pause();
             texture.dispose();
+            alphaMap?.dispose();
             material.dispose();
             plane.geometry.dispose();
 
