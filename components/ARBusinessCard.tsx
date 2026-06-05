@@ -3,131 +3,128 @@ import * as THREE from 'three';
 // @ts-ignore
 import { MindARThree } from 'mind-ar/dist/mindar-image-three.prod.js';
 
-export const ARBusinessCard: React.FC = () => {
+// Video element lives outside React so it survives remounts
+let sharedVideo: HTMLVideoElement | null = null;
+function getSharedVideo() {
+    if (sharedVideo) return sharedVideo;
+    sharedVideo = document.createElement('video');
+    sharedVideo.src = '/VIDEO.mp4';
+    sharedVideo.loop = true;
+    sharedVideo.muted = true;
+    sharedVideo.playsInline = true;
+    sharedVideo.setAttribute('playsinline', '');
+    sharedVideo.setAttribute('webkit-playsinline', '');
+    sharedVideo.load();
+    return sharedVideo;
+}
+
+interface Props {
+    targetFile: string;
+    targetLabel: string;
+    onSwitch: () => void;
+}
+
+export const ARBusinessCard: React.FC<Props> = ({ targetFile, targetLabel, onSwitch }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const mindArRef = useRef<any>(null);
-    const [status, setStatus] = useState<'ESCANEANDO...' | 'OBJETIVO DETECTADO'>('ESCANEANDO...');
-    const [logs, setLogs] = useState<string[]>([]);
-
-    const addLog = (msg: string) => {
-        console.log(msg);
-        setLogs(prev => [...prev.slice(-8), msg]);
-    };
+    const [status, setStatus] = useState<string>(`ESCANEANDO ${targetLabel}...`);
+    const [found, setFound] = useState(false);
 
     useEffect(() => {
         if (!containerRef.current || mindArRef.current) return;
 
-        addLog('Iniciando motor AR...');
-
+        const video = getSharedVideo();
         const mindarThree = new MindARThree({
             container: containerRef.current,
-            imageTargetSrc: '/targets.mind',
-            maxTrack: 2,
+            imageTargetSrc: targetFile,
+            maxTrack: 1,
             uiLoading: 'no',
             uiScanning: 'no',
             uiError: 'no',
+            filterMinCF: 0.0001,
+            filterBeta: 0.001,
         });
 
         mindArRef.current = mindarThree;
         const { renderer, scene, camera } = mindarThree;
-        const anchor0 = mindarThree.addAnchor(0);
-        const anchor1 = mindarThree.addAnchor(1);
+        const anchor = mindarThree.addAnchor(0);
 
-        // Prepare the video element
-        const video = document.createElement('video');
-        video.src = '/VIDEO.mp4';
-        video.loop = true;
-        video.muted = true;
-        video.playsInline = true;
-        video.setAttribute('playsinline', '');
-        video.setAttribute('webkit-playsinline', '');
-        video.load();
-
-        // Create a plane with the video texture — misma para ambos targets
+        // Video plane
         const videoTexture = new THREE.VideoTexture(video);
         const material = new THREE.MeshBasicMaterial({ map: videoTexture });
-        
-        const plane0 = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.5625), material);
-        const plane1 = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.5625), material);
-        anchor0.group.add(plane0);
-        anchor1.group.add(plane1);
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.5625), material);
+        anchor.group.add(plane);
 
         video.addEventListener('loadedmetadata', () => {
             const aspect = video.videoHeight / video.videoWidth;
-            plane0.geometry = new THREE.PlaneGeometry(1, aspect);
-            plane1.geometry = new THREE.PlaneGeometry(1, aspect);
-            addLog(`Video listo: ${video.videoWidth}x${video.videoHeight}`);
-        });
+            plane.geometry = new THREE.PlaneGeometry(1, aspect);
+        }, { once: true });
 
-        // Track visibility — cualquiera de los 2 targets activa el video
-        const onFound = () => {
-            addLog('¡Target encontrado!');
-            setStatus('OBJETIVO DETECTADO');
-            video.play().catch(e => addLog('Error video: ' + e));
-        };
-        const onLost = () => {
-            addLog('Target perdido');
-            setStatus('ESCANEANDO...');
-            video.pause();
-        };
+        // Track visibility via polling (same as /pto working project)
+        let lastVisible = false;
+        let gracePeriodTimer: ReturnType<typeof setTimeout> | null = null;
+        let switchTimer: ReturnType<typeof setTimeout> | null = null;
 
-        anchor0.onTargetFound = onFound;
-        anchor0.onTargetLost = onLost;
-        anchor1.onTargetFound = onFound;
-        anchor1.onTargetLost = onLost;
+        // Auto-switch to other target after 10s if nothing found
+        switchTimer = setTimeout(() => {
+            if (!lastVisible) onSwitch();
+        }, 10000);
+
+        const updateLoop = () => {
+            if (anchor.visible !== lastVisible) {
+                lastVisible = anchor.visible;
+
+                if (lastVisible) {
+                    // Target found
+                    if (gracePeriodTimer) { clearTimeout(gracePeriodTimer); gracePeriodTimer = null; }
+                    if (switchTimer)      { clearTimeout(switchTimer);      switchTimer = null; }
+                    setFound(true);
+                    setStatus('¡TARJETA DETECTADA!');
+                    video.play().catch(() => {});
+                } else {
+                    // Target lost — grace period before switching
+                    setFound(false);
+                    setStatus(`ESCANEANDO ${targetLabel}...`);
+                    gracePeriodTimer = setTimeout(() => {
+                        video.pause();
+                        onSwitch();
+                    }, 4000);
+                }
+            }
+            requestAnimationFrame(updateLoop);
+        };
+        const loopId = requestAnimationFrame(updateLoop);
 
         const start = async () => {
             try {
-                addLog('Arrancando MindAR...');
                 await mindarThree.start();
-                addLog('MindAR OK ✓');
-                renderer.setAnimationLoop(() => {
-                    renderer.render(scene, camera);
-                });
+                renderer.setAnimationLoop(() => renderer.render(scene, camera));
             } catch (err) {
-                addLog(`ERROR: ${err}`);
+                console.error('AR Error:', err);
+                setStatus('ERROR: ' + err);
             }
         };
-
         start();
 
         return () => {
-            renderer.setAnimationLoop(null);
-            try { mindarThree.stop(); } catch (e) {}
-            video.pause();
+            cancelAnimationFrame(loopId);
+            if (gracePeriodTimer) clearTimeout(gracePeriodTimer);
+            if (switchTimer)      clearTimeout(switchTimer);
+            try {
+                renderer.setAnimationLoop(null);
+                mindarThree.stop();
+            } catch (e) {}
             mindArRef.current = null;
         };
     }, []);
 
     return (
         <div style={{
-            width: '100vw',
-            height: '100vh',
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            overflow: 'hidden',
-            background: '#000'
+            width: '100vw', height: '100vh',
+            position: 'fixed', top: 0, left: 0,
+            overflow: 'hidden'
         }}>
             <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-
-            {/* Debug panel - verde en pantalla */}
-            <div style={{
-                position: 'fixed',
-                top: '80px',
-                left: '10px',
-                right: '10px',
-                background: 'rgba(0,0,0,0.7)',
-                color: '#0f0',
-                fontFamily: 'monospace',
-                fontSize: '11px',
-                padding: '6px',
-                borderRadius: '6px',
-                pointerEvents: 'none',
-                zIndex: 999
-            }}>
-                {logs.map((l, i) => <div key={i}>&gt; {l}</div>)}
-            </div>
 
             {/* Status badge */}
             <div style={{
@@ -136,15 +133,13 @@ export const ARBusinessCard: React.FC = () => {
                 pointerEvents: 'none', zIndex: 10
             }}>
                 <div style={{
-                    background: status === 'OBJETIVO DETECTADO' ? 'rgba(247,168,27,0.9)' : 'rgba(0,36,108,0.85)',
-                    padding: '10px 24px',
-                    borderRadius: '30px',
-                    color: 'white',
-                    fontFamily: 'sans-serif',
-                    fontWeight: 'bold',
-                    letterSpacing: '1px',
+                    background: found ? 'rgba(247,168,27,0.92)' : 'rgba(0,36,108,0.85)',
+                    color: found ? '#001540' : 'white',
+                    padding: '10px 24px', borderRadius: '30px',
+                    fontFamily: 'sans-serif', fontWeight: 'bold',
+                    letterSpacing: '1px', fontSize: '14px',
                     border: '1px solid #F7A81B',
-                    boxShadow: '0 0 15px rgba(247,168,27,0.5)',
+                    boxShadow: '0 0 15px rgba(247,168,27,0.4)',
                     transition: 'all 0.3s ease'
                 }}>
                     {status}
