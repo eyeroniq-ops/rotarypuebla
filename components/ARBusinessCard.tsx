@@ -7,7 +7,7 @@ const TARGET_SRC = '/targets.mind';
 const VIDEO_SRC = '/VIDEO.mp4';
 const QR_CENTER_X = -0.02;
 const QR_CENTER_Y = 0.02;
-const QR_WIDTH = 0.36;
+const QR_WIDTH = 0.72;
 const TARGET_COUNT = 2;
 
 const createVideoKeyMaterial = (texture: THREE.VideoTexture) => {
