@@ -3,20 +3,25 @@ import * as THREE from 'three';
 // @ts-ignore
 import { MindARThree } from 'mind-ar/dist/mindar-image-three.prod.js';
 
+type ARStatus = 'CARGANDO...' | 'ESCANEANDO...' | 'OBJETIVO DETECTADO' | 'ERROR AL INICIAR AR';
+
 export const ARBusinessCard: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const mindArRef = useRef<any>(null);
-    const [status, setStatus] = useState<'ESCANEANDO...' | 'OBJETIVO DETECTADO'>('ESCANEANDO...');
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const [status, setStatus] = useState<ARStatus>('CARGANDO...');
 
     useEffect(() => {
         if (!containerRef.current || mindArRef.current) return;
+        let isDisposed = false;
+        let loopId = 0;
 
         const mindarThree = new MindARThree({
             container: containerRef.current,
-            imageTargetSrc: '/targets.mind',
+            imageTargetSrc: '/tar1.mind',
             maxTrack: 1,
-            uiLoading: 'yes',
-            uiScanning: 'yes',
+            uiLoading: 'no',
+            uiScanning: 'no',
             uiError: 'yes',
             filterMinCF: 0.0001,
             filterBeta: 0.001,
@@ -31,14 +36,25 @@ export const ARBusinessCard: React.FC = () => {
         video.loop = true;
         video.muted = true;
         video.playsInline = true;
+        video.crossOrigin = 'anonymous';
+        video.preload = 'auto';
         video.setAttribute('playsinline', '');
         video.setAttribute('webkit-playsinline', '');
         video.load();
+        videoRef.current = video;
 
         const texture = new THREE.VideoTexture(video);
+        texture.encoding = THREE.sRGBEncoding;
+
+        const material = new THREE.MeshBasicMaterial({
+            map: texture,
+            side: THREE.DoubleSide,
+            toneMapped: false,
+        });
+
         const plane = new THREE.Mesh(
             new THREE.PlaneGeometry(1, 0.5625),
-            new THREE.MeshBasicMaterial({ map: texture })
+            material
         );
         anchor.group.add(plane);
 
@@ -47,41 +63,57 @@ export const ARBusinessCard: React.FC = () => {
             plane.geometry = new THREE.PlaneGeometry(1, aspect);
         }, { once: true });
 
+        anchor.onTargetFound = () => {
+            if (isDisposed) return;
+            setStatus('OBJETIVO DETECTADO');
+            video.play().catch((err) => {
+                console.warn('Video playback blocked:', err);
+            });
+        };
+
+        anchor.onTargetLost = () => {
+            if (isDisposed) return;
+            setStatus('ESCANEANDO...');
+            video.pause();
+        };
+
         const start = async () => {
             try {
                 await mindarThree.start();
+                if (isDisposed) return;
+                setStatus('ESCANEANDO...');
                 renderer.setAnimationLoop(() => renderer.render(scene, camera));
             } catch (err) {
                 console.error('AR Error:', err);
+                if (!isDisposed) setStatus('ERROR AL INICIAR AR');
             }
         };
         start();
 
-        let lastVisible = false;
         const updateLoop = () => {
-            if (anchor.visible !== lastVisible) {
-                lastVisible = anchor.visible;
-                if (lastVisible) {
-                    setStatus('OBJETIVO DETECTADO');
-                    video.play().catch(() => {});
-                } else {
-                    setStatus('ESCANEANDO...');
-                    video.pause();
-                }
+            if (anchor.visible && video.paused) {
+                video.play().catch(() => {});
             }
-            requestAnimationFrame(updateLoop);
+            loopId = requestAnimationFrame(updateLoop);
         };
-        const loopId = requestAnimationFrame(updateLoop);
+        loopId = requestAnimationFrame(updateLoop);
 
         return () => {
+            isDisposed = true;
             cancelAnimationFrame(loopId);
-            try { mindarThree.stop(); renderer.setAnimationLoop(null); } catch (e) {}
+            renderer.setAnimationLoop(null);
+            video.pause();
+            texture.dispose();
+            material.dispose();
+            plane.geometry.dispose();
+            try { mindarThree.stop(); } catch (e) {}
             mindArRef.current = null;
+            videoRef.current = null;
         };
     }, []);
 
     return (
-        <div style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, overflow: 'hidden' }}>
+        <div style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, overflow: 'hidden', background: '#000' }}>
             <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
             <div style={{ position: 'fixed', top: '20px', left: 0, right: 0, display: 'flex', justifyContent: 'center', pointerEvents: 'none', zIndex: 10 }}>
                 <div style={{

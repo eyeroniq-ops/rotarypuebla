@@ -89,10 +89,8 @@
       import { MindARThree } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js';
 
       // ─── CONFIG ────────────────────────────────────────────────
-      const TARGET_FILES  = ['/target-t1.mind', '/target-t2.mind'];
-      const SWITCH_DELAY  = 10000;  // 10s antes de alternar si no detecta
+      const TARGET_FILE  = '/tar1.mind';
       const GRACE_PERIOD  = 4000;   // ms de gracia antes de parar video
-      const CAMERA_PAUSE  = 800;    // ms para liberar camara entre instancias
       // ───────────────────────────────────────────────────────────
       const badge    = document.getElementById('status-badge');
       const scanRing = document.getElementById('scan-ring');
@@ -101,8 +99,6 @@
       let mindar    = null;
       let rendererRef = null;
       let videoEl   = null;
-      let currentIdx = 0;
-      let switchTimer   = null;
       let graceTimer    = null;
       let detected  = false;
       let gracePending = false;
@@ -122,14 +118,13 @@
       }
 
       // ── UI helpers ──
-      function setStatus(state, idx) {
-        const labels = ['diseño 1', 'diseño 2'];
+      function setStatus(state) {
         if (state === 'loading') {
           badge.textContent = 'CARGANDO...';
           badge.classList.remove('found');
           scanRing.classList.remove('active');
         } else if (state === 'scanning') {
-          badge.textContent = `ESCANEANDO ${(labels[idx]||'').toUpperCase()}...`;
+          badge.textContent = 'ESCANEANDO...';
           badge.classList.remove('found');
           scanRing.classList.add('active');
         } else if (state === 'found') {
@@ -141,7 +136,6 @@
 
       // ── Stop current MindAR session ──
       async function stopAR() {
-        clearTimeout(switchTimer);
         clearTimeout(graceTimer);
         if (rendererRef) rendererRef.setAnimationLoop(null);
         if (mindar) {
@@ -154,21 +148,18 @@
         });
       }
 
-      // ── Start MindAR with a given target file ──
-      async function startAR(fileIndex) {
+      // ── Start MindAR with the Rotary target ──
+      async function startAR() {
         await stopAR();
-        // Pausa para que iOS libere la camara correctamente
-        await new Promise(r => setTimeout(r, CAMERA_PAUSE));
-        currentIdx = fileIndex;
         detected   = false;
         gracePending = false;
-        setStatus('loading', fileIndex);
+        setStatus('loading');
 
         const video = getVideo();
 
         const m = new MindARThree({
           container,
-          imageTargetSrc: TARGET_FILES[fileIndex],
+          imageTargetSrc: TARGET_FILE,
           maxTrack: 1,
           uiLoading: 'no',
           uiScanning: 'no',
@@ -207,23 +198,13 @@
             detected     = false;
             video.pause();
             setStatus('scanning');
-            // switch to other target
-            startAR((currentIdx + 1) % TARGET_FILES.length);
           }, GRACE_PERIOD);
         };
 
         try {
           await m.start();
-          setStatus('scanning', fileIndex);
+          setStatus('scanning');
           renderer.setAnimationLoop(() => renderer.render(scene, camera));
-
-          // Auto-switch if nothing detected after delay
-          switchTimer = setTimeout(() => {
-            if (!detected && !gracePending) {
-              startAR((currentIdx + 1) % TARGET_FILES.length);
-            }
-          }, SWITCH_DELAY);
-
         } catch(err) {
           console.error('AR Error:', err);
           badge.textContent = 'ERROR: ' + err;
@@ -231,7 +212,7 @@
       }
 
       // ── Boot ──
-      startAR(0);
+      startAR();
     </script>
   </body>
 </html>
