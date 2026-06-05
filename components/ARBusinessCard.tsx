@@ -31,6 +31,8 @@ export const ARBusinessCard: React.FC = () => {
             uiError: 'no',
             filterMinCF: 0.0001,
             filterBeta: 0.001,
+            warmupTolerance: 1,
+            missTolerance: 20,
         });
 
         mindArRef.current = mindarThree;
