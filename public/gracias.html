@@ -90,8 +90,9 @@
 
       // ─── CONFIG ────────────────────────────────────────────────
       const TARGET_FILES  = ['/target-t1.mind', '/target-t2.mind'];
-      const SWITCH_DELAY  = 3000;   // ms antes de alternar si no detecta
+      const SWITCH_DELAY  = 10000;  // 10s antes de alternar si no detecta
       const GRACE_PERIOD  = 4000;   // ms de gracia antes de parar video
+      const CAMERA_PAUSE  = 800;    // ms para liberar camara entre instancias
       // ───────────────────────────────────────────────────────────
       const badge    = document.getElementById('status-badge');
       const scanRing = document.getElementById('scan-ring');
@@ -121,13 +122,14 @@
       }
 
       // ── UI helpers ──
-      function setStatus(state) {
+      function setStatus(state, idx) {
+        const labels = ['diseño 1', 'diseño 2'];
         if (state === 'loading') {
           badge.textContent = 'CARGANDO...';
           badge.classList.remove('found');
           scanRing.classList.remove('active');
         } else if (state === 'scanning') {
-          badge.textContent = 'ESCANEANDO...';
+          badge.textContent = `ESCANEANDO ${(labels[idx]||'').toUpperCase()}...`;
           badge.classList.remove('found');
           scanRing.classList.add('active');
         } else if (state === 'found') {
@@ -155,10 +157,12 @@
       // ── Start MindAR with a given target file ──
       async function startAR(fileIndex) {
         await stopAR();
+        // Pausa para que iOS libere la camara correctamente
+        await new Promise(r => setTimeout(r, CAMERA_PAUSE));
         currentIdx = fileIndex;
         detected   = false;
         gracePending = false;
-        setStatus('loading');
+        setStatus('loading', fileIndex);
 
         const video = getVideo();
 
@@ -210,10 +214,10 @@
 
         try {
           await m.start();
-          setStatus('scanning');
+          setStatus('scanning', fileIndex);
           renderer.setAnimationLoop(() => renderer.render(scene, camera));
 
-          // Auto-switch if nothing detected
+          // Auto-switch if nothing detected after delay
           switchTimer = setTimeout(() => {
             if (!detected && !gracePending) {
               startAR((currentIdx + 1) % TARGET_FILES.length);
