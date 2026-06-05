@@ -135,7 +135,7 @@ export const CLUB_MEMBERS: Member[] = [
     profession: "Digital / Inteligencia Artificial / Prototipos",
     shortDescription: "Me dedico a lo digital, inteligencia artificial, prototipos, impresion 3D y aplicaciones.",
     businessHelp: "Puedo ayudarte con proyectos digitales, inteligencia artificial, prototipos, impresion 3D, aplicaciones y soluciones tecnologicas.",
-    imageUrl: "/rtr.png",
+    imageUrl: "/foto_rash_reyes.jpg",
     email: "rash.reyes@example.com",
     whatsapp: "522220000000",
     birthday: "01/01",
