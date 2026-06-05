@@ -10,6 +10,32 @@ const QR_CENTER_Y = 0.02;
 const QR_WIDTH = 0.72;
 const TARGET_COUNT = 2;
 
+const createBackdropMaterial = () => {
+    return new THREE.ShaderMaterial({
+        vertexShader: `
+            varying vec2 vUv;
+
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            varying vec2 vUv;
+
+            void main() {
+                float edgeX = smoothstep(0.0, 0.18, vUv.x) * smoothstep(0.0, 0.18, 1.0 - vUv.x);
+                float edgeY = smoothstep(0.0, 0.18, vUv.y) * smoothstep(0.0, 0.18, 1.0 - vUv.y);
+                float alpha = edgeX * edgeY * 0.42;
+                gl_FragColor = vec4(0.02, 0.03, 0.05, alpha);
+            }
+        `,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+    });
+};
+
 const createVideoKeyMaterial = (texture: THREE.VideoTexture) => {
     return new THREE.ShaderMaterial({
         uniforms: {
@@ -54,7 +80,6 @@ const createVideoKeyMaterial = (texture: THREE.VideoTexture) => {
 export const ARBusinessCard: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const mindArRef = useRef<any>(null);
-    const [status, setStatus] = useState<'ESCANEANDO...' | 'OBJETIVO DETECTADO'>('ESCANEANDO...');
     const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
     const addLog = (msg: string) => {
@@ -100,9 +125,20 @@ export const ARBusinessCard: React.FC = () => {
         const texture = new THREE.VideoTexture(video);
         texture.encoding = THREE.sRGBEncoding;
         const material = createVideoKeyMaterial(texture);
+        const backdropMaterial = createBackdropMaterial();
 
         const videoAspect = 16 / 9;
+        const backdropScale = 1.14;
+        const backdropWidth = QR_WIDTH * backdropScale;
         const planes = anchors.map((anchor) => {
+            const backdrop = new THREE.Mesh(
+                new THREE.PlaneGeometry(backdropWidth, backdropWidth / videoAspect),
+                backdropMaterial
+            );
+            backdrop.position.set(QR_CENTER_X, QR_CENTER_Y, 0.005);
+            backdrop.visible = false;
+            anchor.group.add(backdrop);
+
             const plane = new THREE.Mesh(
                 new THREE.PlaneGeometry(QR_WIDTH, QR_WIDTH / videoAspect),
                 material
@@ -112,12 +148,17 @@ export const ARBusinessCard: React.FC = () => {
             anchor.group.add(plane);
             return plane;
         });
+        const backdrops = anchors.map((anchor) => anchor.group.children[anchor.group.children.length - 2] as THREE.Mesh);
 
         video.addEventListener('loadedmetadata', () => {
             const aspect = video.videoWidth / video.videoHeight || videoAspect;
             planes.forEach((plane) => {
                 plane.geometry.dispose();
                 plane.geometry = new THREE.PlaneGeometry(QR_WIDTH, QR_WIDTH / aspect);
+            });
+            backdrops.forEach((backdrop) => {
+                backdrop.geometry.dispose();
+                backdrop.geometry = new THREE.PlaneGeometry(backdropWidth, backdropWidth / aspect);
             });
         }, { once: true });
 
@@ -163,7 +204,6 @@ export const ARBusinessCard: React.FC = () => {
             if (isVisible !== lastVisible) {
                 lastVisible = isVisible;
                 const newStatus = lastVisible ? 'OBJETIVO DETECTADO' : 'ESCANEANDO...';
-                setStatus(newStatus);
                 addLog(`Status: ${newStatus}${visibleAnchorIndex >= 0 ? ` target ${visibleAnchorIndex + 1}` : ''}`);
 
                 if (lastVisible) {
@@ -177,10 +217,16 @@ export const ARBusinessCard: React.FC = () => {
             planes.forEach((plane, index) => {
                 plane.visible = index === visibleAnchorIndex;
             });
+            backdrops.forEach((backdrop, index) => {
+                backdrop.visible = index === visibleAnchorIndex;
+            });
 
             if (isVisible) {
                 if (video.paused) tryPlayVideo();
             } else {
+                backdrops.forEach((backdrop) => {
+                    backdrop.visible = false;
+                });
                 video.pause();
                 video.currentTime = 0;
             }
@@ -197,7 +243,9 @@ export const ARBusinessCard: React.FC = () => {
             video.pause();
             texture.dispose();
             material.dispose();
+            backdropMaterial.dispose();
             planes.forEach((plane) => plane.geometry.dispose());
+            backdrops.forEach((backdrop) => backdrop.geometry.dispose());
 
             if (mindarThree) {
                 try {
@@ -244,31 +292,34 @@ export const ARBusinessCard: React.FC = () => {
                 ))}
             </div>
 
-            <div style={{
-                position: 'absolute',
-                top: '20px',
-                left: '0',
-                right: '0',
-                display: 'flex',
-                justifyContent: 'center',
-                pointerEvents: 'none',
-                zIndex: 10,
-            }}>
-                <div style={{
-                    background: status === 'OBJETIVO DETECTADO' ? 'rgba(247, 168, 27, 0.9)' : 'rgba(0, 36, 108, 0.8)',
-                    padding: '10px 20px',
-                    borderRadius: '30px',
+            <a
+                href="/"
+                style={{
+                    position: 'absolute',
+                    top: 'calc(18px + env(safe-area-inset-top))',
+                    right: '18px',
+                    zIndex: 20,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '42px',
+                    padding: '0 18px',
+                    borderRadius: '999px',
+                    background: 'rgba(0, 36, 108, 0.82)',
                     color: 'white',
+                    border: '1px solid rgba(247, 168, 27, 0.85)',
+                    boxShadow: '0 10px 24px rgba(0,0,0,0.24)',
                     fontFamily: 'sans-serif',
-                    border: '1px solid #F7A81B',
-                    boxShadow: status === 'OBJETIVO DETECTADO' ? '0 0 20px #F7A81B' : '0 0 10px #F7A81B',
-                    transition: 'all 0.3s ease',
-                    fontWeight: 'bold',
-                    letterSpacing: '1px',
-                }}>
-                    {status}
-                </div>
-            </div>
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    letterSpacing: '0.2px',
+                    textDecoration: 'none',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                }}
+            >
+                Conoce más
+            </a>
 
             <div style={{
                 position: 'absolute',
@@ -284,10 +335,10 @@ export const ARBusinessCard: React.FC = () => {
                 pointerEvents: 'none',
             }}>
                 <div style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '2px', color: '#F7A81B' }}>
-                    ROTARY INTERNATIONAL
+                    CLUB ROTARIO PUEBLA VIVO
                 </div>
                 <div style={{ fontSize: '12px', marginTop: '4px' }}>
-                    ESCANEA LA TARJETA ROTARY PARA CONECTAR
+                    ESCANEA EL RECONOCIMIENTO
                 </div>
             </div>
         </div>
