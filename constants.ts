@@ -141,6 +141,20 @@ export const CLUB_MEMBERS: Member[] = [
     birthday: "01/01",
     businessUrl: "https://eyeroniq.netlify.app",
     socials: {}
+  },
+  {
+    id: "13",
+    name: "Yamil Gil",
+    role: "Socio Activo",
+    profession: "Funcionario de gobierno / Leche para el Bienestar / Branding y marketing / Inteligencia Artificial / Joyeria",
+    shortDescription: "Se desempeña como funcionario de gobierno en Leche para el Bienestar y participa en proyectos de branding, marketing, inteligencia artificial y joyeria.",
+    businessHelp: "Puedo ayudar con branding, marketing, inteligencia artificial, joyeria y vinculacion institucional desde el ambito gubernamental.",
+    imageUrl: "/rtr.png",
+    email: "yamil.gil@example.com",
+    whatsapp: "522220000000",
+    birthday: "01/01",
+    businessUrl: "https://eyeroniq.netlify.app",
+    socials: {}
   }
 ];
 
