@@ -9,6 +9,8 @@ import Gallery from './components/Gallery';
 import Footer from './components/Footer';
 import JoinUs from './components/JoinUs';
 import AdminDashboard from './components/AdminDashboard';
+import ServicesList from './components/ServicesList';
+import Alliances from './components/Alliances';
 
 import GraciasPage from './components/GraciasPage';
 
@@ -22,6 +24,8 @@ function HomePage() {
       <div className="flex flex-col gap-0">
         <Hero />
         <About />
+        <ServicesList />
+        <Alliances />
         <JoinUs />
 
         <Directory />
