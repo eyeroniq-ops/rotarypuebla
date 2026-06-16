@@ -4,7 +4,7 @@ import { Users } from 'lucide-react';
 import { ROTARY_BLUE, ROTARY_GOLD } from '../constants';
 
 const alliances = [
-  { name: "Land Rover", shortName: "Land" },
+  { name: "Land Rover", shortName: "Land Rover" },
   { name: "Tesla", shortName: "Tesla" },
   { name: "Omada", shortName: "Omada" },
   { name: "Radisson", shortName: "Radisson" },
