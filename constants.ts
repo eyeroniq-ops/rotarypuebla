@@ -6,15 +6,16 @@ export const CLUB_MEMBERS: Member[] = [
   {
     id: "10",
     name: "Jorge Angulo",
-    role: "Presidente",
+    role: "Fundador",
     profession: "Psicólogo Especialista en Adicciones",
     shortDescription: "Líder comprometido con el servicio y la comunidad.",
     businessHelp: "Soluciones en adicciones.",
-    imageUrl: "/foto_jorge_angulo.jpg",
+    imageUrl: "/foto_jorge_angulo.jpg?v=2",
     email: "jorge.angulo@example.com",
     whatsapp: "522225544790",
     birthday: "01/01",
-    socials: {}
+    socials: {},
+    imageSettings: { x: 46, y: 50 }
   },
   {
     id: "11",
