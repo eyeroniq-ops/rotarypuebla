@@ -18,6 +18,19 @@ export const CLUB_MEMBERS: Member[] = [
     imageSettings: { x: 46, y: 50 }
   },
   {
+    id: "8",
+    name: "Fer López Olea",
+    role: "Presidente",
+    profession: "Gestor Educativo / Estratega Cultural / Creativo",
+    shortDescription: "Impulsor de innovación en INNCREA y Director de Vinculación en Terapias Ecuestres México OPPAC.",
+    businessHelp: "Desarrollo de proyectos de comunicación, liderazgo y transformation social. Experto en difusión cultural y podcasting.",
+    imageUrl: "/foto_fer_olea.jpg",
+    email: "fer.lopez@example.com",
+    whatsapp: "522220000000",
+    birthday: "01/01",
+    socials: {}
+  },
+  {
     id: "11",
     name: "Dr. Rubén Romero Méndez",
     role: "Socio Activo",
@@ -102,19 +115,6 @@ export const CLUB_MEMBERS: Member[] = [
       instagram: "https://instagram.com/roko.ko2",
       facebook: "https://facebook.com/Rosa Sanchez"
     }
-  },
-  {
-    id: "8",
-    name: "Fer López Olea",
-    role: "Socio Activo",
-    profession: "Gestor Educativo / Estratega Cultural / Creativo",
-    shortDescription: "Impulsor de innovación en INNCREA y Director de Vinculación en Terapias Ecuestres México OPPAC.",
-    businessHelp: "Desarrollo de proyectos de comunicación, liderazgo y transformation social. Experto en difusión cultural y podcasting.",
-    imageUrl: "/foto_fer_olea.jpg",
-    email: "fer.lopez@example.com",
-    whatsapp: "522220000000",
-    birthday: "01/01",
-    socials: {}
   },
   {
     id: "9",
