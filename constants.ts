@@ -73,33 +73,6 @@ export const CLUB_MEMBERS: Member[] = [
     businessUrl: "https://strateggia.com",
     socials: {}
   },
-
-  {
-    id: "7",
-    name: "Karla Mariana Silva Revilla",
-    role: "Socio Activo",
-    profession: "Co-Founder UNLOCK Universe / Estratega Web3",
-    shortDescription: "Líder en innovación, comunidades digitales y tecnologías emergentes.",
-    businessHelp: "Estrategias de marca, crecimiento digital e implementación Web3.",
-    imageUrl: "/foto_karla_revilla.jpg",
-    email: "karlarevilla04@gmail.com",
-    whatsapp: "522221817738",
-    birthday: "04/04",
-    socials: {}
-  },
-  {
-    id: "5",
-    name: "Alejandro Luna Anivarro",
-    role: "Socio Activo",
-    profession: "Consultoría empresarial y de proyectos",
-    shortDescription: "Consultor experto en gestión y desarrollo de proyectos.",
-    businessHelp: "Asesoría estratégica para proyectos empresariales.",
-    imageUrl: "/foto_alejandro_luna.jpg",
-    email: "alex.luna.an@gmail.com",
-    whatsapp: "522223818251",
-    birthday: "07/01",
-    socials: {}
-  },
   {
     id: "6",
     name: "Rosa María Romero Sánchez",
@@ -117,19 +90,6 @@ export const CLUB_MEMBERS: Member[] = [
     }
   },
   {
-    id: "9",
-    name: "Hugo Roa",
-    role: "Socio Activo",
-    profession: "Miembro del Club Rotario",
-    shortDescription: "Comprometido con el servicio y las causas rotarias.",
-    businessHelp: "Colaboración en proyectos de impacto social.",
-    imageUrl: "/foto_hugo_roa.jpg",
-    email: "hugo.roa@example.com",
-    whatsapp: "522220000000",
-    birthday: "01/01",
-    socials: {}
-  },
-  {
     id: "12",
     name: "Rash Reyes",
     role: "Socio Activo",
@@ -138,20 +98,6 @@ export const CLUB_MEMBERS: Member[] = [
     businessHelp: "Puedo ayudarte con proyectos digitales, inteligencia artificial, prototipos, impresion 3D, aplicaciones y soluciones tecnologicas.",
     imageUrl: "/foto_rash_reyes.jpg",
     email: "rash.reyes@example.com",
-    whatsapp: "522220000000",
-    birthday: "01/01",
-    businessUrl: "https://eyeroniq.netlify.app",
-    socials: {}
-  },
-  {
-    id: "13",
-    name: "Yamil Gil",
-    role: "Socio Activo",
-    profession: "Funcionario de gobierno / Leche para el Bienestar / Branding y marketing / Inteligencia Artificial / Joyeria",
-    shortDescription: "Se desempeña como funcionario de gobierno en Leche para el Bienestar y participa en proyectos de branding, marketing, inteligencia artificial y joyeria.",
-    businessHelp: "Puedo ayudar con branding, marketing, inteligencia artificial, joyeria y vinculacion institucional desde el ambito gubernamental.",
-    imageUrl: "/rtr.png",
-    email: "yamil.gil@example.com",
     whatsapp: "522220000000",
     birthday: "01/01",
     businessUrl: "https://eyeroniq.netlify.app",
